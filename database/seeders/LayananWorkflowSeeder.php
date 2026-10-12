@@ -6,6 +6,8 @@ use App\Models\Layanan;
 use App\Models\LayananWorkflow;
 use App\Models\MasterDokumenPengajuan;
 use App\Models\Pengajuan;
+use App\Models\PengajuanFieldData;
+use App\Models\PengajuanWorkflowData;
 use App\Models\Workflow;
 use App\Models\WorkflowField;
 use Illuminate\Database\Seeder;
@@ -193,10 +195,18 @@ class LayananWorkflowSeeder extends Seeder
             }
         }
 
-        // 4. Migrasi Kolom pengajuan.layanan_id untuk Data Lama
-        $layananBaru = $createdLayanans['pembangunan-aplikasi-baru']->id ?? null;
-        $layananPengembangan = $createdLayanans['pengembangan-aplikasi-eksisting']->id ?? null;
-        $layananPenonaktifan = $createdLayanans['penonaktifan-aplikasi']->id ?? null;
+        // 4. Sinkronisasi Seluruh Pengajuan, Workflow Pipeline Data & Field Data
+        self::syncAllPengajuanWorkflows();
+    }
+
+    /**
+     * Sinkronisasi data pengajuan lama/baru ke alur pipeline workflow dinamis.
+     */
+    public static function syncAllPengajuanWorkflows(): void
+    {
+        $layananBaru = Layanan::where('slug', 'pembangunan-aplikasi-baru')->value('id');
+        $layananPengembangan = Layanan::where('slug', 'pengembangan-aplikasi-eksisting')->value('id');
+        $layananPenonaktifan = Layanan::where('slug', 'penonaktifan-aplikasi')->value('id');
 
         if ($layananBaru) {
             Pengajuan::where('jenis_pengajuan', 'new_app')->whereNull('layanan_id')->update(['layanan_id' => $layananBaru]);
@@ -206,6 +216,145 @@ class LayananWorkflowSeeder extends Seeder
         }
         if ($layananPenonaktifan) {
             Pengajuan::where('jenis_pengajuan', 'app_deactivation')->whereNull('layanan_id')->update(['layanan_id' => $layananPenonaktifan]);
+        }
+
+        $pengajuans = Pengajuan::with(['layanan.workflows.workflow.fields', 'project', 'dokumen', 'instansi.users'])->get();
+
+        foreach ($pengajuans as $pengajuan) {
+            if (! $pengajuan->layanan) {
+                continue;
+            }
+
+            $workflows = $pengajuan->layanan->workflows()->with('workflow.fields')->orderBy('urutan')->get();
+
+            // Tentukan tahapan aktif berdasarkan status pengajuan dan progres proyek
+            $activeSlug = match ($pengajuan->status) {
+                'draft' => 'pengajuan-berkas',
+                'submitted' => 'telaah-kelayakan',
+                'under_review' => 'telaah-kelayakan',
+                'rejected' => 'telaah-kelayakan',
+                'approved' => match (true) {
+                    $pengajuan->layanan->slug === 'penonaktifan-aplikasi' => 'decommissioning',
+                    ! $pengajuan->project => 'in_development',
+                    $pengajuan->project->status === 'live' => 'live',
+                    $pengajuan->project->status === 'deployment' => 'deployment',
+                    $pengajuan->project->status === 'security_testing' => 'security_testing',
+                    $pengajuan->project->status === 'functional_testing' => 'functional_testing',
+                    default => 'in_development',
+                },
+                default => 'pengajuan-berkas',
+            };
+
+            $targetIndex = null;
+            foreach ($workflows as $idx => $lw) {
+                if ($lw->workflow->slug === $activeSlug) {
+                    $targetIndex = $idx;
+                    break;
+                }
+            }
+
+            foreach ($workflows as $idx => $lw) {
+                if ($pengajuan->status === 'draft') {
+                    $stepStatus = ($idx === 0) ? 'in_progress' : 'pending';
+                } elseif ($pengajuan->status === 'rejected') {
+                    if ($idx === 0) {
+                        $stepStatus = 'completed';
+                    } elseif ($idx === 1) {
+                        $stepStatus = 'rejected';
+                    } else {
+                        $stepStatus = 'pending';
+                    }
+                } elseif ($activeSlug === 'live') {
+                    $stepStatus = 'completed';
+                } elseif ($targetIndex !== null) {
+                    if ($idx < $targetIndex) {
+                        $stepStatus = 'completed';
+                    } elseif ($idx === $targetIndex) {
+                        $stepStatus = ($pengajuan->status === 'submitted') ? 'pending' : 'in_progress';
+                    } else {
+                        $stepStatus = 'pending';
+                    }
+                } else {
+                    $stepStatus = ($idx === 0) ? 'completed' : 'pending';
+                }
+
+                $completedBy = null;
+                $completedAt = null;
+                $catatan = null;
+
+                if ($stepStatus === 'completed') {
+                    $completedAt = $pengajuan->created_at?->copy()->addDays($idx * 2) ?? now();
+                    if ($idx === 0) {
+                        $completedBy = $pengajuan->instansi?->users()?->first()?->id;
+                    } elseif ($idx === 1) {
+                        $completedBy = $pengajuan->dinilai_oleh;
+                        $catatan = $pengajuan->catatan_penilaian;
+                    }
+                } elseif ($stepStatus === 'rejected') {
+                    $completedBy = $pengajuan->dinilai_oleh;
+                    $completedAt = $pengajuan->tanggal_penilaian ?? now();
+                    $catatan = $pengajuan->catatan_penilaian;
+                }
+
+                $pwData = PengajuanWorkflowData::updateOrCreate(
+                    [
+                        'pengajuan_id' => $pengajuan->id,
+                        'layanan_workflow_id' => $lw->id,
+                    ],
+                    [
+                        'status' => $stepStatus,
+                        'completed_by' => $completedBy,
+                        'completed_at' => $completedAt,
+                        'catatan' => $catatan,
+                    ]
+                );
+
+                // Sinkronisasi data field checklist / berkas
+                foreach ($lw->workflow->fields as $field) {
+                    $val = null;
+                    $filePath = null;
+                    $namaAsli = null;
+                    $ukuranFile = null;
+
+                    if ($field->tipe === 'checklist') {
+                        $val = ($pengajuan->status !== 'draft') ? '1' : null;
+                    } elseif ($field->tipe === 'file_upload' && $field->master_dokumen_id) {
+                        $dok = $pengajuan->dokumen->firstWhere('master_dokumen_id', $field->master_dokumen_id);
+                        if ($dok) {
+                            $filePath = $dok->file_path;
+                            $namaAsli = $dok->nama_file_asli;
+                            $ukuranFile = $dok->ukuran_file;
+                            $val = $dok->file_path;
+                        }
+                    }
+
+                    if ($val || $filePath) {
+                        PengajuanFieldData::updateOrCreate(
+                            [
+                                'pengajuan_workflow_data_id' => $pwData->id,
+                                'workflow_field_id' => $field->id,
+                            ],
+                            [
+                                'value' => $val,
+                                'file_path' => $filePath,
+                                'nama_file_asli' => $namaAsli,
+                                'ukuran_file' => $ukuranFile,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            // Hubungkan current_workflow_id pada project
+            if ($pengajuan->project && ! $pengajuan->project->current_workflow_id) {
+                $activeLw = $workflows->firstWhere('workflow.slug', $activeSlug);
+                if (! $activeLw && $activeSlug === 'live') {
+                    $activeLw = $workflows->last();
+                }
+                if ($activeLw) {
+                    $pengajuan->project->update(['current_workflow_id' => $activeLw->id]);
+                }
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Models\DokumenPengajuan;
 use App\Models\DokumenPerancangan;
 use App\Models\HostingAplikasi;
 use App\Models\Instansi;
+use App\Models\Layanan;
 use App\Models\MasterDokumenPengajuan;
 use App\Models\Pengajuan;
 use App\Models\PengujianKeamanan;
@@ -414,6 +415,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call(LayananWorkflowSeeder::class);
 
+        $layananBaru = Layanan::where('slug', 'pembangunan-aplikasi-baru')->first();
+        $layananPengembangan = Layanan::where('slug', 'pengembangan-aplikasi-eksisting')->first();
+        $layananPenonaktifan = Layanan::where('slug', 'penonaktifan-aplikasi')->first();
+
         // =========================================================================
         // 5. Master Direktori Aplikasi
         // =========================================================================
@@ -507,6 +512,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => $appEpuskesmas->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'e-Puskesmas Riau',
                 'deskripsi_kebutuhan' => 'Pembangunan aplikasi sistem informasi rekam medis elektronik puskesmas se-Provinsi Riau sesuai standar SatuSehat Kemenkes.',
@@ -525,6 +531,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $diskominfo->id,
                 'aplikasi_id' => $appSatuData->id,
+                'layanan_id' => $layananPengembangan->id,
                 'jenis_pengajuan' => 'app_development',
                 'nama_aplikasi' => 'Portal Satu Data Riau',
                 'deskripsi_kebutuhan' => 'Peningkatan modul integrasi REST API dan dasbor analitik Satu Data Riau untuk koneksi ke SDI Nasional.',
@@ -543,6 +550,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $bapenda->id,
                 'aplikasi_id' => $appEsamsat->id,
+                'layanan_id' => $layananPengembangan->id,
                 'jenis_pengajuan' => 'app_development',
                 'nama_aplikasi' => 'e-Samsat & Pajak Daerah Riau',
                 'deskripsi_kebutuhan' => 'Integrasi gateway pembayaran QRIS, Virtual Account Bank Riau Kepri Syariah, dan validasi data Korlantas Polri.',
@@ -561,6 +569,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $disdik->id,
                 'aplikasi_id' => $appPpdb->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'PPDB Online SMA/SMK Negeri Riau',
                 'deskripsi_kebutuhan' => 'Pembangunan sistem seleksi penerimaan siswa baru terpusat dengan komputasi jalur zonasi berbasis geolokasi.',
@@ -579,6 +588,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => $appSigawat->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'SI-Gawat Darurat 119 Riau',
                 'deskripsi_kebutuhan' => 'Sistem telekomunikasi dan respon cepat penanganan pasien gawat darurat terhubung ke seluruh RSUD rujukan.',
@@ -597,6 +607,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $pupr->id,
                 'aplikasi_id' => $appEjalan->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'e-Jalan Riau (GIS Pemeliharaan Jalan)',
                 'deskripsi_kebutuhan' => 'Peta interaktif kondisi jalan dan jembatan provinsi dengan pelaporan foto koordinat GPS dari masyarakat.',
@@ -615,6 +626,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dlhk->id,
                 'aplikasi_id' => $appAmdal->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'AMDAL Online Riau Hijau',
                 'deskripsi_kebutuhan' => 'Digitalisasi alur rekomendasi persetujuan lingkungan hidup dan transparansi uji kelayakan publik.',
@@ -633,6 +645,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananPengembangan->id,
                 'jenis_pengajuan' => 'app_development',
                 'nama_aplikasi' => 'Sistem Logistik Farmasi & Gudang Obat Terpadu',
                 'deskripsi_kebutuhan' => 'Pembaruan modul stok opname obat, peringatan kadaluarsa vaksin, dan distribusi logistik ke 12 kabupaten/kota.',
@@ -651,6 +664,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'SIPosyandu - Pemantauan Gizi & Stunting Balita',
                 'deskripsi_kebutuhan' => 'Pencatatan data antropometri balita tingkat posyandu untuk intervensi dini penanganan stunting daerah.',
@@ -668,6 +682,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $rsud->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'Sistem Antrean Poliklinik & Telekonsultasi RSUD',
                 'deskripsi_kebutuhan' => 'Pendaftaran antrean pasien BPJS dan non-BPJS secara mobile serta konsultasi online dokter spesialis.',
@@ -683,6 +698,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'Aplikasi Game Edukasi Gizi Anak Balita',
                 'deskripsi_kebutuhan' => 'Aplikasi permainan mini interaktif pengenalan makanan bergizi untuk anak usia dini.',
@@ -701,6 +717,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'Sistem Pencatatan Vaksinasi Rabies Terpadu',
                 'deskripsi_kebutuhan' => 'Pemetaan wilayah endemik dan ketersediaan vaksin anti-rabies di puskesmas perbatasan.',
@@ -716,6 +733,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $bapenda->id,
                 'aplikasi_id' => $appSimpadLama->id,
+                'layanan_id' => $layananPenonaktifan->id,
                 'jenis_pengajuan' => 'app_deactivation',
                 'nama_aplikasi' => 'Sistem Informasi Manajemen Pajak Daerah (SIMPAD Lama v1.0)',
                 'deskripsi_kebutuhan' => 'Penutupan operasional server dan pengalihan domain simpad-old.riau.go.id karena seluruh basis data telah termigrasi 100% ke e-Samsat Terpadu.',
@@ -1208,6 +1226,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => $appTest->id,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'Sistem test test',
                 'deskripsi_kebutuhan' => 'Sistem test adalah test',
@@ -1225,6 +1244,7 @@ class DatabaseSeeder extends Seeder
             [
                 'instansi_id' => $dinkes->id,
                 'aplikasi_id' => null,
+                'layanan_id' => $layananBaru->id,
                 'jenis_pengajuan' => 'new_app',
                 'nama_aplikasi' => 'aaaaa',
                 'deskripsi_kebutuhan' => 'aaaaasdaddasdadsadadsadsas',
@@ -1293,5 +1313,10 @@ class DatabaseSeeder extends Seeder
                 'keterangan' => 'Aplikasi berhasil dideploy ke server produksi TIK Riau.',
             ]
         );
+
+        // =========================================================================
+        // 9. Sinkronisasi Data Pipeline Workflow & Dokumen Seluruh Pengajuan
+        // =========================================================================
+        LayananWorkflowSeeder::syncAllPengajuanWorkflows();
     }
 }
