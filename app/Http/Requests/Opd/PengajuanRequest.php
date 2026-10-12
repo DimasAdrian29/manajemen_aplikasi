@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Opd;
 
+use App\Models\Layanan;
 use App\Models\MasterDokumenPengajuan;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,9 +18,40 @@ class PengajuanRequest extends FormRequest
     }
 
     /**
+     * Prepare inputs for validation to ensure backward and forward compatibility.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('layanan_id') && ! $this->filled('jenis_pengajuan')) {
+            $layanan = Layanan::find($this->input('layanan_id'));
+            if ($layanan) {
+                $jenis = match (true) {
+                    str_contains($layanan->slug, 'baru') => 'new_app',
+                    str_contains($layanan->slug, 'nonaktif') || str_contains($layanan->slug, 'deactivation') => 'app_deactivation',
+                    default => 'app_development',
+                };
+                $this->merge(['jenis_pengajuan' => $jenis]);
+            }
+        } elseif ($this->filled('jenis_pengajuan') && ! $this->filled('layanan_id')) {
+            $slug = match ($this->input('jenis_pengajuan')) {
+                'new_app' => 'pembangunan-aplikasi-baru',
+                'app_development' => 'pengembangan-aplikasi-eksisting',
+                'app_deactivation' => 'penonaktifan-aplikasi',
+                default => null,
+            };
+            if ($slug) {
+                $layanan = Layanan::where('slug', $slug)->first();
+                if ($layanan) {
+                    $this->merge(['layanan_id' => $layanan->id]);
+                }
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, array<mixed>|string>
      */
     public function rules(): array
     {
@@ -28,7 +59,8 @@ class PengajuanRequest extends FormRequest
         $jenis = $this->input('jenis_pengajuan');
 
         $rules = [
-            'jenis_pengajuan' => ['required', Rule::in(['new_app', 'app_development', 'app_deactivation'])],
+            'layanan_id' => ['nullable', 'exists:layanan,id'],
+            'jenis_pengajuan' => ['required', 'string'],
             'nama_aplikasi' => ['required_if:jenis_pengajuan,new_app', 'nullable', 'string', 'max:255'],
             'aplikasi_id' => [
                 'required_if:jenis_pengajuan,app_development,app_deactivation',
@@ -42,7 +74,7 @@ class PengajuanRequest extends FormRequest
             'no_hp_pemohon' => ['required', 'string', 'max:20'],
         ];
 
-        // Dynamic Document Rules
+        // Validasi Dokumen (baik melalui master dokumen maupun workflow fields)
         if ($jenis) {
             $masterDocs = MasterDokumenPengajuan::active()->berlakuUntuk($jenis)->get();
             $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
@@ -51,7 +83,6 @@ class PengajuanRequest extends FormRequest
             foreach ($masterDocs as $doc) {
                 $docRules = [];
 
-                // Jika wajib
                 if ($doc->wajib) {
                     if ($isUpdate && $pengajuan) {
                         $alreadyUploaded = $pengajuan->dokumen()->where('master_dokumen_id', $doc->id)->exists();
@@ -78,6 +109,21 @@ class PengajuanRequest extends FormRequest
             }
         }
 
+        // Validasi Field Workflow Tambahan (Checklist & Teks Wajib) jika disertakan dari formulir alur
+        if ($this->has('fields') && $this->filled('layanan_id')) {
+            $layanan = Layanan::with('workflows.workflow.fields')->find($this->input('layanan_id'));
+            $firstStep = $layanan?->workflows->first()?->workflow;
+            if ($firstStep) {
+                foreach ($firstStep->fields as $wfField) {
+                    if ($wfField->tipe === 'checklist' && $wfField->wajib) {
+                        $rules["fields.{$wfField->id}"] = ['accepted'];
+                    } elseif ($wfField->tipe === 'text' && $wfField->wajib) {
+                        $rules["fields.{$wfField->id}"] = ['required', 'string'];
+                    }
+                }
+            }
+        }
+
         return $rules;
     }
 
@@ -89,6 +135,7 @@ class PengajuanRequest extends FormRequest
     public function attributes(): array
     {
         $attributes = [
+            'layanan_id' => 'Jenis Layanan',
             'jenis_pengajuan' => 'Jenis Permohonan',
             'nama_aplikasi' => 'Nama Usulan Aplikasi',
             'aplikasi_id' => 'Pilihan Aplikasi',

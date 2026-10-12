@@ -412,6 +412,8 @@ class DatabaseSeeder extends Seeder
             MasterDokumenPengajuan::firstOrCreate(['kode_dokumen' => $dok['kode_dokumen']], $dok);
         }
 
+        $this->call(LayananWorkflowSeeder::class);
+
         // =========================================================================
         // 5. Master Direktori Aplikasi
         // =========================================================================

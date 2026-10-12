@@ -115,50 +115,25 @@
             <span>Jenis Layanan Fasilitasi Aplikasi Daerah</span>
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <!-- Pembangunan Baru -->
-            <a href="{{ route('opd.pengajuan.create', ['jenis' => 'new_app']) }}" class="group block p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-[#0D47A1]/40 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-105 transition">
-                    <span class="material-symbols-outlined text-[26px]">add_to_photos</span>
+            @forelse ($layanans as $layanan)
+                <a href="{{ route('opd.pengajuan.create', ['layanan' => $layanan->slug]) }}" class="group block p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-[#0D47A1]/40 hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition" style="background-color: {{ $layanan->warna }}18; color: {{ $layanan->warna }};">
+                        <span class="material-symbols-outlined text-[26px]">{{ $layanan->ikon ?? 'category' }}</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 group-hover:text-[#0D47A1] transition">{{ $layanan->nama }}</h4>
+                    <p class="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
+                        {{ $layanan->deskripsi }}
+                    </p>
+                    <div class="mt-4 flex items-center gap-1 text-xs font-bold text-[#0D47A1]">
+                        <span>Mulai Permohonan</span>
+                        <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition">arrow_forward</span>
+                    </div>
+                </a>
+            @empty
+                <div class="col-span-full p-8 text-center bg-white rounded-2xl border border-slate-200">
+                    <p class="text-xs text-slate-400">Belum ada layanan aktif yang tersedia saat ini.</p>
                 </div>
-                <h4 class="text-sm font-bold text-slate-900 group-hover:text-[#0D47A1] transition">Pembangunan Aplikasi Baru</h4>
-                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                    Ajukan usulan pengembangan sistem informasi atau aplikasi baru untuk menunjang tugas pokok fungsi instansi Anda.
-                </p>
-                <div class="mt-4 flex items-center gap-1 text-xs font-bold text-[#0D47A1]">
-                    <span>Mulai Permohonan</span>
-                    <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition">arrow_forward</span>
-                </div>
-            </a>
-
-            <!-- Pengembangan Lama -->
-            <a href="{{ route('opd.pengajuan.create', ['jenis' => 'app_development']) }}" class="group block p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-[#0D47A1]/40 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl bg-blue-50 text-[#0D47A1] flex items-center justify-center mb-4 group-hover:scale-105 transition">
-                    <span class="material-symbols-outlined text-[26px]">published_with_changes</span>
-                </div>
-                <h4 class="text-sm font-bold text-slate-900 group-hover:text-[#0D47A1] transition">Pengembangan Aplikasi Eksisting</h4>
-                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                    Permintaan pembaruan modul, integrasi interoperabilitas antar-layanan, atau perbaikan alur pada aplikasi yang sudah ada.
-                </p>
-                <div class="mt-4 flex items-center gap-1 text-xs font-bold text-[#0D47A1]">
-                    <span>Pilih Aplikasi & Ajukan</span>
-                    <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition">arrow_forward</span>
-                </div>
-            </a>
-
-            <!-- Penonaktifan -->
-            <a href="{{ route('opd.pengajuan.create', ['jenis' => 'app_deactivation']) }}" class="group block p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-[#0D47A1]/40 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-105 transition">
-                    <span class="material-symbols-outlined text-[26px]">power_settings_new</span>
-                </div>
-                <h4 class="text-sm font-bold text-slate-900 group-hover:text-[#0D47A1] transition">Penonaktifan Aplikasi</h4>
-                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                    Pengajuan penghentian operasional, pencabutan domain sub-pemprov, atau migrasi data ke aplikasi terpadu nasional/provinsi.
-                </p>
-                <div class="mt-4 flex items-center gap-1 text-xs font-bold text-[#0D47A1]">
-                    <span>Ajukan Penonaktifan</span>
-                    <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition">arrow_forward</span>
-                </div>
-            </a>
+            @endforelse
         </div>
     </div>
     @endcan
@@ -198,19 +173,9 @@
                                 </a>
                             </td>
                             <td class="py-4 px-6">
-                                @if ($p->jenis_pengajuan === 'new_app')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        Aplikasi Baru
-                                    </span>
-                                @elseif ($p->jenis_pengajuan === 'app_development')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                        Pengembangan
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                        Penonaktifan
-                                    </span>
-                                @endif
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    {{ $p->nama_layanan }}
+                                </span>
                             </td>
                             <td class="py-4 px-6 font-medium text-slate-900">
                                 {{ $p->nama_aplikasi ?? ($p->aplikasi->nama_aplikasi ?? '-') }}

@@ -97,7 +97,7 @@ class ProjectController extends Controller
 
         $request->validate([
             'progres_total' => ['required', 'integer', 'min:0', 'max:100'],
-            'status' => ['nullable', 'in:in_development,functional_testing'],
+            'status' => ['nullable', 'string', 'max:100'],
             'tahapan' => ['nullable', 'array'],
             'tahapan.*.id' => ['required', 'exists:tahapan_project,id'],
             'tahapan.*.persentase' => ['required', 'integer', 'min:0', 'max:100'],
@@ -108,7 +108,20 @@ class ProjectController extends Controller
             // Update progres total proyek
             $updateData = ['progres_total' => $request->input('progres_total')];
             if ($request->filled('status')) {
-                $updateData['status'] = $request->input('status');
+                $statusVal = $request->input('status');
+                $updateData['status'] = $statusVal;
+
+                $lw = $project->pengajuan?->layanan?->workflows()
+                    ->whereHas('workflow', function ($q) use ($statusVal) {
+                        $q->where('slug', $statusVal);
+                    })->first();
+
+                if ($lw) {
+                    $updateData['current_workflow_id'] = $lw->id;
+                    $project->pengajuan->workflowData()
+                        ->where('layanan_workflow_id', $lw->id)
+                        ->update(['status' => 'in_progress']);
+                }
             }
             $project->update($updateData);
 

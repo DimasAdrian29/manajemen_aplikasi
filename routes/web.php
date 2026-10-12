@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Aptika\DashboardController as AptikaDashboardController;
+use App\Http\Controllers\Aptika\LayananController as AptikaLayananController;
 use App\Http\Controllers\Aptika\PengajuanController as AptikaPengajuanController;
 use App\Http\Controllers\Aptika\ProjectController as AptikaProjectController;
 use App\Http\Controllers\Aptika\RapatController as AptikaRapatController;
 use App\Http\Controllers\Aptika\TestingController as AptikaTestingController;
+use App\Http\Controllers\Aptika\WorkflowController as AptikaWorkflowController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Eksekutif\AplikasiController as EksekutifAplikasiController;
 use App\Http\Controllers\Eksekutif\DashboardController as EksekutifDashboardController;
@@ -76,7 +78,7 @@ Route::middleware(['auth', 'role_or_permission:superadmin|rbac.user.view|rbac.ro
         Route::put('role/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('role.permissions.update')->middleware('role_or_permission:superadmin|rbac.matrix.manage');
     });
 
-Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|project.create|project.manage_tim|testing.fungsional.view|rapat.create'])
+Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|project.create|project.manage_tim|testing.fungsional.view|rapat.create|layanan.view|workflow.view'])
     ->prefix('aptika')
     ->as('aptika.')
     ->group(function () {
@@ -102,6 +104,20 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::resource('rapat', AptikaRapatController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|rapat.view');
         Route::resource('rapat', AptikaRapatController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|rapat.create');
         Route::patch('/rapat/{rapat}/notulensi', [AptikaRapatController::class, 'notulensi'])->name('rapat.notulensi')->middleware('role_or_permission:admin_aptika|rapat.notulensi');
+
+        // Konfigurasi Layanan & Susunan Workflow Dinamis
+        Route::resource('layanan', AptikaLayananController::class)->middleware('role_or_permission:admin_aptika|layanan.view');
+        Route::patch('layanan/{layanan}/toggle', [AptikaLayananController::class, 'toggle'])->name('layanan.toggle')->middleware('role_or_permission:admin_aptika|layanan.edit');
+        Route::post('layanan/{layanan}/workflow', [AptikaLayananController::class, 'attachWorkflow'])->name('layanan.workflow.attach')->middleware('role_or_permission:admin_aptika|layanan.edit');
+        Route::delete('layanan/{layanan}/workflow/{layananWorkflow}', [AptikaLayananController::class, 'detachWorkflow'])->name('layanan.workflow.detach')->middleware('role_or_permission:admin_aptika|layanan.edit');
+        Route::patch('layanan/{layanan}/workflow/reorder', [AptikaLayananController::class, 'reorderWorkflow'])->name('layanan.workflow.reorder')->middleware('role_or_permission:admin_aptika|layanan.edit');
+
+        // Master Workflow & Konfigurasi Field
+        Route::resource('workflow', AptikaWorkflowController::class)->middleware('role_or_permission:admin_aptika|workflow.view');
+        Route::post('workflow/{workflow}/field', [AptikaWorkflowController::class, 'storeField'])->name('workflow.field.store')->middleware('role_or_permission:admin_aptika|workflow.edit');
+        Route::put('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'updateField'])->name('workflow.field.update')->middleware('role_or_permission:admin_aptika|workflow.edit');
+        Route::delete('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'destroyField'])->name('workflow.field.destroy')->middleware('role_or_permission:admin_aptika|workflow.edit');
+        Route::patch('workflow/{workflow}/field/reorder', [AptikaWorkflowController::class, 'reorderField'])->name('workflow.field.reorder')->middleware('role_or_permission:admin_aptika|workflow.edit');
     });
 
 Route::middleware(['auth', 'role_or_permission:admin_infrastruktur|infra.deployment.view|infra.hosting.view|infra.decommission.view'])

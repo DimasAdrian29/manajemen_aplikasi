@@ -104,6 +104,11 @@ class ProjectController extends Controller
                 $aplikasi->update(['status' => 'pengembangan']);
             }
 
+            $devWorkflow = $pengajuan->layanan?->workflows()
+                ->whereHas('workflow', function ($q) {
+                    $q->where('slug', 'in_development');
+                })->first();
+
             // Buat Project
             $project = Project::create([
                 'pengajuan_id' => $pengajuan->id,
@@ -112,6 +117,7 @@ class ProjectController extends Controller
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'status' => 'initiated',
+                'current_workflow_id' => $devWorkflow?->id,
                 'progres_total' => 0,
             ]);
 
@@ -192,13 +198,41 @@ class ProjectController extends Controller
     public function updateStatus(Request $request, Project $project): RedirectResponse
     {
         $request->validate([
-            'status' => ['required', 'in:initiated,in_development,functional_testing,security_testing,deployment,live,inactive,delayed'],
+            'status' => ['required', 'string', 'max:100'],
             'progres_total' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
-        $data = ['status' => $request->input('status')];
+        $newStatus = $request->input('status');
+        $data = ['status' => $newStatus];
         if ($request->filled('progres_total')) {
             $data['progres_total'] = $request->input('progres_total');
+        }
+
+        // Cari layanan workflow yang cocok dengan status (slug)
+        $layananWorkflow = $project->pengajuan?->layanan?->workflows()
+            ->whereHas('workflow', function ($q) use ($newStatus) {
+                $q->where('slug', $newStatus);
+            })->first();
+
+        if ($layananWorkflow) {
+            $data['current_workflow_id'] = $layananWorkflow->id;
+
+            // Update pengajuan workflow data
+            $project->pengajuan->workflowData()
+                ->where('layanan_workflow_id', $layananWorkflow->id)
+                ->update(['status' => 'in_progress']);
+
+            // Selesaikan step-step sebelumnya jika ada
+            $project->pengajuan->workflowData()
+                ->whereHas('layananWorkflow', function ($q) use ($layananWorkflow) {
+                    $q->where('urutan', '<', $layananWorkflow->urutan);
+                })
+                ->where('status', '!=', 'completed')
+                ->update([
+                    'status' => 'completed',
+                    'completed_by' => auth()->id(),
+                    'completed_at' => now(),
+                ]);
         }
 
         $project->update($data);

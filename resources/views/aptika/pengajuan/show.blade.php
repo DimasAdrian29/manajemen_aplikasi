@@ -13,19 +13,9 @@
                 <span class="font-mono text-sm font-extrabold text-[#0D47A1] bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
                     {{ $pengajuan->kode_pengajuan }}
                 </span>
-                @if ($pengajuan->jenis_pengajuan === 'new_app')
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Aplikasi Baru
-                    </span>
-                @elseif ($pengajuan->jenis_pengajuan === 'app_development')
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                        Pengembangan
-                    </span>
-                @else
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                        Penonaktifan
-                    </span>
-                @endif
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    {{ $pengajuan->nama_layanan }}
+                </span>
 
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold 
                     @if ($pengajuan->status === 'submitted') bg-blue-50 text-blue-700 border border-blue-200
@@ -65,6 +55,41 @@
             @endif
         </div>
     </div>
+
+    <!-- Workflow Lifecycle Pipeline Tracker -->
+    @if ($pengajuan->layanan && $pengajuan->layanan->workflows->isNotEmpty())
+        <div class="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-6">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px] text-[#0D47A1]">account_tree</span>
+                <span>Progres Alur Layanan: {{ $pengajuan->nama_layanan }}</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @foreach ($pengajuan->layanan->workflows as $lw)
+                    @php
+                        $wfData = $pengajuan->workflowData->firstWhere('layanan_workflow_id', $lw->id);
+                        $stepStatus = $wfData?->status ?? 'pending';
+                    @endphp
+                    <div class="flex items-center gap-3 p-3 rounded-xl border {{ $stepStatus === 'completed' ? 'bg-emerald-50/50 border-emerald-200' : ($stepStatus === 'in_progress' ? 'bg-blue-50/50 border-blue-200 ring-2 ring-blue-100' : 'bg-slate-50/50 border-slate-200/80') }}">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 {{ $stepStatus === 'completed' ? 'bg-emerald-600 text-white' : ($stepStatus === 'in_progress' ? 'bg-[#0D47A1] text-white animate-pulse' : 'bg-slate-200 text-slate-500') }}">
+                            @if ($stepStatus === 'completed')
+                                <span class="material-symbols-outlined text-[15px]">check</span>
+                            @elseif ($stepStatus === 'in_progress')
+                                <span class="material-symbols-outlined text-[15px]">sync</span>
+                            @else
+                                <span>{{ $lw->urutan }}</span>
+                            @endif
+                        </div>
+                        <div class="min-w-0">
+                            <span class="text-xs font-bold {{ $stepStatus === 'completed' ? 'text-emerald-950' : ($stepStatus === 'in_progress' ? 'text-[#0D47A1]' : 'text-slate-600') }} block truncate">
+                                {{ $lw->workflow->nama }}
+                            </span>
+                            <span class="text-[10px] text-slate-400 capitalize">{{ str_replace('_', ' ', $stepStatus) }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <!-- Detail Deskripsi & Data Pemohon -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'tanggal_selesai',
     'progres_total',
     'status',
+    'current_workflow_id',
 ])]
 class Project extends Model
 {
@@ -86,5 +87,10 @@ class Project extends Model
     public function rapat(): HasMany
     {
         return $this->hasMany(RapatProject::class);
+    }
+
+    public function currentWorkflow(): BelongsTo
+    {
+        return $this->belongsTo(LayananWorkflow::class, 'current_workflow_id');
     }
 }

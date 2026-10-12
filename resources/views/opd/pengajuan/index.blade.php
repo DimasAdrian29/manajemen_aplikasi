@@ -24,14 +24,14 @@
             </div>
 
             <select 
-                name="jenis" 
+                name="layanan_id" 
                 onchange="this.form.submit()" 
                 class="py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1] shadow-xs cursor-pointer"
             >
                 <option value="">Semua Layanan</option>
-                <option value="new_app" {{ $jenis === 'new_app' ? 'selected' : '' }}>Aplikasi Baru</option>
-                <option value="app_development" {{ $jenis === 'app_development' ? 'selected' : '' }}>Pengembangan</option>
-                <option value="app_deactivation" {{ $jenis === 'app_deactivation' ? 'selected' : '' }}>Penonaktifan</option>
+                @foreach ($layanans as $lay)
+                    <option value="{{ $lay->id }}" {{ $layananId == $lay->id ? 'selected' : '' }}>{{ $lay->nama }}</option>
+                @endforeach
             </select>
 
             <select 
@@ -89,19 +89,9 @@
                                 </a>
                             </td>
                             <td class="py-4 px-6">
-                                @if ($item->jenis_pengajuan === 'new_app')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        Aplikasi Baru
-                                    </span>
-                                @elseif ($item->jenis_pengajuan === 'app_development')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                        Pengembangan
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                        Penonaktifan
-                                    </span>
-                                @endif
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    {{ $item->nama_layanan }}
+                                </span>
                             </td>
                             <td class="py-4 px-6">
                                 <div class="font-semibold text-slate-900">

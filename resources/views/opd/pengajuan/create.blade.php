@@ -20,63 +20,40 @@
         <form method="POST" action="{{ route('opd.pengajuan.store') }}" enctype="multipart/form-data" class="space-y-8" id="formPengajuan">
             @csrf
 
-            <!-- 1. Pilihan Jenis Layanan -->
+            <!-- 1. Pilihan Jenis Layanan Dinamis -->
             <div>
                 <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-                    Langkah 1: Pilih Jenis Layanan <span class="text-rose-500">*</span>
+                    Langkah 1: Pilih Jenis Layanan Fasilitasi <span class="text-rose-500">*</span>
                 </label>
-                
-                @php
-                    $selectedJenis = old('jenis_pengajuan', request('jenis', 'new_app'));
-                @endphp
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- New App -->
-                    <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition select-none jenis-radio-card {{ $selectedJenis === 'new_app' ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
-                        <input type="radio" name="jenis_pengajuan" value="new_app" class="sr-only" {{ $selectedJenis === 'new_app' ? 'checked' : '' }} onchange="onJenisChange(this.value)">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[18px]">add_box</span>
-                            </span>
-                            <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $selectedJenis === 'new_app' ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
-                                <span class="w-1.5 h-1.5 rounded-full bg-white {{ $selectedJenis === 'new_app' ? 'block' : 'hidden' }}"></span>
-                            </span>
-                        </div>
-                        <div class="text-sm font-bold text-slate-900">Aplikasi Baru</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Usulan sistem informasi yang belum pernah dibangun sebelumnya.</div>
-                    </label>
-
-                    <!-- App Development -->
-                    <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition select-none jenis-radio-card {{ $selectedJenis === 'app_development' ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
-                        <input type="radio" name="jenis_pengajuan" value="app_development" class="sr-only" {{ $selectedJenis === 'app_development' ? 'checked' : '' }} onchange="onJenisChange(this.value)">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="w-8 h-8 rounded-lg bg-blue-100 text-[#0D47A1] flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[18px]">upgrade</span>
-                            </span>
-                            <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $selectedJenis === 'app_development' ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
-                                <span class="w-1.5 h-1.5 rounded-full bg-white {{ $selectedJenis === 'app_development' ? 'block' : 'hidden' }}"></span>
-                            </span>
-                        </div>
-                        <div class="text-sm font-bold text-slate-900">Pengembangan Modul</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Pembaruan fitur/modul pada sistem informasi eksisting.</div>
-                    </label>
-
-                    <!-- App Deactivation -->
-                    <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition select-none jenis-radio-card {{ $selectedJenis === 'app_deactivation' ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
-                        <input type="radio" name="jenis_pengajuan" value="app_deactivation" class="sr-only" {{ $selectedJenis === 'app_deactivation' ? 'checked' : '' }} onchange="onJenisChange(this.value)">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[18px]">power_off</span>
-                            </span>
-                            <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $selectedJenis === 'app_deactivation' ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
-                                <span class="w-1.5 h-1.5 rounded-full bg-white {{ $selectedJenis === 'app_deactivation' ? 'block' : 'hidden' }}"></span>
-                            </span>
-                        </div>
-                        <div class="text-sm font-bold text-slate-900">Penonaktifan Sistem</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Penghentian aplikasi, penutupan domain & arsip database.</div>
-                    </label>
+                    @foreach ($layanans as $layananItem)
+                        @php
+                            $isSelected = ($selectedLayanan && $selectedLayanan->id === $layananItem->id);
+                            $isNewApp = str_contains($layananItem->slug, 'baru');
+                            $legacyType = $isNewApp ? 'new_app' : (str_contains($layananItem->slug, 'nonaktif') || str_contains($layananItem->slug, 'deactivation') ? 'app_deactivation' : 'app_development');
+                        @endphp
+                        <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition select-none layanan-radio-card {{ $isSelected ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}"
+                            data-layanan-id="{{ $layananItem->id }}"
+                            data-is-new="{{ $isNewApp ? '1' : '0' }}"
+                            data-legacy-type="{{ $legacyType }}"
+                        >
+                            <input type="radio" name="layanan_id" value="{{ $layananItem->id }}" class="sr-only" {{ $isSelected ? 'checked' : '' }} onchange="onLayananChange({{ $layananItem->id }}, '{{ $legacyType }}', {{ $isNewApp ? 'true' : 'false' }})">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: {{ $layananItem->warna }}18; color: {{ $layananItem->warna }};">
+                                    <span class="material-symbols-outlined text-[20px]">{{ $layananItem->ikon ?? 'category' }}</span>
+                                </span>
+                                <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white {{ $isSelected ? 'block' : 'hidden' }}"></span>
+                                </span>
+                            </div>
+                            <div class="text-sm font-bold text-slate-900">{{ $layananItem->nama }}</div>
+                            <div class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{{ $layananItem->deskripsi }}</div>
+                        </label>
+                    @endforeach
                 </div>
-                @error('jenis_pengajuan')
+                <input type="hidden" name="jenis_pengajuan" id="jenis_pengajuan_input" value="{{ old('jenis_pengajuan', str_contains($selectedLayanan?->slug ?? '', 'baru') ? 'new_app' : (str_contains($selectedLayanan?->slug ?? '', 'nonaktif') ? 'app_deactivation' : 'app_development')) }}">
+                @error('layanan_id')
                     <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                 @enderror
             </div>
@@ -87,8 +64,12 @@
                     Langkah 2: Data Sistem & Kebutuhan
                 </div>
 
-                <!-- Input Nama Aplikasi (Hanya jika new_app) -->
-                <div id="fieldNamaAplikasi" class="{{ $selectedJenis === 'new_app' ? 'block' : 'hidden' }}">
+                @php
+                    $isInitiallyNew = str_contains($selectedLayanan?->slug ?? '', 'baru') || old('jenis_pengajuan') === 'new_app';
+                @endphp
+
+                <!-- Input Nama Aplikasi (Jika layanan sistem baru) -->
+                <div id="fieldNamaAplikasi" class="{{ $isInitiallyNew ? 'block' : 'hidden' }}">
                     <label for="nama_aplikasi" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         Nama Usulan Aplikasi <span class="text-rose-500">*</span>
                     </label>
@@ -105,8 +86,8 @@
                     @enderror
                 </div>
 
-                <!-- Dropdown Pilih Aplikasi Eksisting (Jika app_development / app_deactivation) -->
-                <div id="fieldPilihAplikasi" class="{{ in_array($selectedJenis, ['app_development', 'app_deactivation']) ? 'block' : 'hidden' }}">
+                <!-- Select Aplikasi Eksisting (Jika layanan pengembangan / penonaktifan) -->
+                <div id="fieldPilihAplikasi" class="{{ $isInitiallyNew ? 'hidden' : 'block' }}">
                     <label for="aplikasi_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         Pilih Aplikasi Terdaftar <span class="text-rose-500">*</span>
                     </label>
@@ -115,19 +96,13 @@
                         id="aplikasi_id" 
                         class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('aplikasi_id') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
                     >
-                        <option value="">-- Pilih Aplikasi Milik OPD Anda --</option>
+                        <option value="">-- Pilih Aplikasi Milik Perangkat Daerah Anda --</option>
                         @foreach ($aplikasis as $app)
                             <option value="{{ $app->id }}" {{ old('aplikasi_id') == $app->id ? 'selected' : '' }}>
-                                {{ $app->nama_aplikasi }} (Status: {{ ucfirst($app->status) }})
+                                {{ $app->nama_aplikasi }} ({{ $app->url_aplikasi ?? 'URL Internal' }})
                             </option>
                         @endforeach
                     </select>
-                    @if ($aplikasis->isEmpty())
-                        <p class="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[15px]">info</span>
-                            <span>Instansi Anda belum memiliki aplikasi terdaftar. Silakan pilih "Aplikasi Baru".</span>
-                        </p>
-                    @endif
                     @error('aplikasi_id')
                         <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
                     @enderror
@@ -136,13 +111,13 @@
                 <!-- Deskripsi Kebutuhan & Ruang Lingkup -->
                 <div>
                     <label for="deskripsi_kebutuhan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                        Deskripsi Kebutuhan / Urgensi Sistem <span class="text-rose-500">*</span>
+                        Deskripsi Kebutuhan & Ruang Lingkup <span class="text-rose-500">*</span>
                     </label>
                     <textarea 
                         name="deskripsi_kebutuhan" 
                         id="deskripsi_kebutuhan" 
                         rows="4" 
-                        placeholder="Jelaskan latar belakang, proses bisnis utama yang ingin diotomasi, pengguna sasaran, serta dampak bagi efisiensi birokrasi..." 
+                        placeholder="Jelaskan proses bisnis, tujuan sistem, target pengguna, dan justifikasi usulan secara rinci..." 
                         class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('deskripsi_kebutuhan') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
                         required
                     >{{ old('deskripsi_kebutuhan') }}</textarea>
@@ -198,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- 4. Unggah Berkas Dokumen Dinamis (Sesuai Regulasi Aktif) -->
+            <!-- 4. Unggah Berkas Dokumen Dinamis Sesuai Alur Workflow -->
             <div class="pt-4 border-t border-slate-100 space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
@@ -206,7 +181,7 @@
                             Langkah 4: Lampiran Dokumen Persyaratan
                         </div>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Slot unggahan di bawah ini disesuaikan otomatis dengan regulasi permohonan yang Anda pilih.
+                            Slot unggahan berkas disesuaikan dengan regulasi layanan SPBE yang Anda pilih.
                         </p>
                     </div>
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -215,10 +190,14 @@
                     </span>
                 </div>
 
+                @php
+                    $initLegacyType = $isInitiallyNew ? 'new_app' : (str_contains($selectedLayanan?->slug ?? '', 'nonaktif') ? 'app_deactivation' : 'app_development');
+                @endphp
+
                 <div class="space-y-4" id="dokumenContainer">
                     @foreach ($masterDokumens as $doc)
                         @php
-                            $isRelevant = ($doc->berlaku_untuk === 'semua' || $doc->berlaku_untuk === $selectedJenis);
+                            $isRelevant = ($doc->berlaku_untuk === 'semua' || $doc->berlaku_untuk === $initLegacyType);
                         @endphp
                         <div 
                             class="doc-slot p-5 rounded-xl border border-slate-200/90 bg-slate-50/40 space-y-3 transition" 
@@ -248,7 +227,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Template Download Link (jika ada) -->
                                 @if ($doc->file_template)
                                     <a href="{{ asset('storage/' . $doc->file_template) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shrink-0">
                                         <span class="material-symbols-outlined text-[15px]">file_download</span>
@@ -285,6 +263,59 @@
                 </div>
             </div>
 
+            <!-- 5. Field Checklist & Pernyataan Kepatuhan Workflow -->
+            @if ($firstStepWorkflow && $firstStepWorkflow->fields->isNotEmpty())
+                @php
+                    $nonDocFields = $firstStepWorkflow->fields->where('tipe', '!=', 'file_upload');
+                @endphp
+                @if ($nonDocFields->isNotEmpty())
+                    <div class="pt-4 border-t border-slate-100 space-y-4">
+                        <div>
+                            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                Langkah 5: Checklist & Konfirmasi Kesiapan SPBE
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Persyaratan verifikasi pada tahapan: <strong>{{ $firstStepWorkflow->nama }}</strong>
+                            </p>
+                        </div>
+
+                        <div class="space-y-3">
+                            @foreach ($nonDocFields as $wfField)
+                                @if ($wfField->tipe === 'checklist')
+                                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-blue-50/30 transition">
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" name="fields[{{ $wfField->id }}]" value="1" {{ old('fields.' . $wfField->id) ? 'checked' : '' }} {{ $wfField->wajib ? 'required' : '' }} class="mt-0.5 w-4 h-4 rounded text-[#0D47A1] focus:ring-[#0D47A1]">
+                                            <div class="text-xs">
+                                                <span class="font-bold text-slate-800">{{ $wfField->label }}</span>
+                                                @if ($wfField->wajib)
+                                                    <span class="text-rose-500 font-bold">*</span>
+                                                @endif
+                                                @if ($wfField->keterangan)
+                                                    <p class="text-slate-500 mt-0.5 leading-relaxed">{{ $wfField->keterangan }}</p>
+                                                @endif
+                                            </div>
+                                        </label>
+                                        @error('fields.' . $wfField->id)
+                                            <p class="text-xs text-rose-600 mt-1 pl-7">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @elseif ($wfField->tipe === 'text')
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                            {{ $wfField->label }} @if ($wfField->wajib) <span class="text-rose-500">*</span> @endif
+                                        </label>
+                                        <textarea name="fields[{{ $wfField->id }}]" rows="2" {{ $wfField->wajib ? 'required' : '' }} placeholder="{{ $wfField->keterangan ?? 'Masukkan isian...' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]">{{ old('fields.' . $wfField->id) }}</textarea>
+                                        @error('fields.' . $wfField->id)
+                                            <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endif
+
             <!-- Submit Button Bar -->
             <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
                 <a href="{{ route('opd.pengajuan.index') }}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
@@ -300,14 +331,14 @@
 </div>
 
 <script>
-    function onJenisChange(jenis) {
+    function onLayananChange(layananId, legacyType, isNewApp) {
         // 1. Update radio styling
-        document.querySelectorAll('.jenis-radio-card').forEach(card => {
-            const input = card.querySelector('input[type="radio"]');
+        document.querySelectorAll('.layanan-radio-card').forEach(card => {
+            const id = card.getAttribute('data-layanan-id');
             const checkIcon = card.querySelector('.radio-check');
             const dot = checkIcon.querySelector('span');
 
-            if (input.value === jenis) {
+            if (id == layananId) {
                 card.classList.add('border-[#0D47A1]', 'bg-blue-50/40', 'ring-2', 'ring-[#0D47A1]/10');
                 card.classList.remove('border-slate-200', 'bg-white');
                 checkIcon.classList.add('border-[#0D47A1]', 'bg-[#0D47A1]');
@@ -322,13 +353,16 @@
             }
         });
 
-        // 2. Toggle App Name vs Select Existing App
+        // 2. Set hidden jenis_pengajuan input
+        document.getElementById('jenis_pengajuan_input').value = legacyType;
+
+        // 3. Toggle App Name vs Select Existing App
         const fieldNama = document.getElementById('fieldNamaAplikasi');
         const inputNama = document.getElementById('nama_aplikasi');
         const fieldPilih = document.getElementById('fieldPilihAplikasi');
         const selectApp = document.getElementById('aplikasi_id');
 
-        if (jenis === 'new_app') {
+        if (isNewApp) {
             fieldNama.classList.remove('hidden');
             inputNama.setAttribute('required', 'required');
             fieldPilih.classList.add('hidden');
@@ -340,13 +374,13 @@
             selectApp.setAttribute('required', 'required');
         }
 
-        // 3. Filter Dynamic Document Slots
+        // 4. Filter Dynamic Document Slots
         document.querySelectorAll('.doc-slot').forEach(slot => {
             const berlaku = slot.getAttribute('data-berlaku');
             const isWajib = slot.getAttribute('data-wajib') === '1';
             const fileInput = slot.querySelector('.doc-file-input');
 
-            const isMatch = (berlaku === 'semua' || berlaku === jenis);
+            const isMatch = (berlaku === 'semua' || berlaku === legacyType);
 
             if (isMatch) {
                 slot.style.display = '';
@@ -360,16 +394,20 @@
                 slot.style.display = 'none';
                 fileInput.setAttribute('disabled', 'disabled');
                 fileInput.removeAttribute('required');
-                fileInput.value = ''; // Reset file selection
+                fileInput.value = '';
             }
         });
     }
 
     // Inisialisasi awal saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
-        const checkedRadio = document.querySelector('input[name="jenis_pengajuan"]:checked');
-        if (checkedRadio) {
-            onJenisChange(checkedRadio.value);
+        const checkedCard = document.querySelector('.layanan-radio-card input[name="layanan_id"]:checked');
+        if (checkedCard) {
+            const parent = checkedCard.closest('.layanan-radio-card');
+            const id = parent.getAttribute('data-layanan-id');
+            const legacyType = parent.getAttribute('data-legacy-type');
+            const isNewApp = parent.getAttribute('data-is-new') === '1';
+            onLayananChange(id, legacyType, isNewApp);
         }
     });
 </script>

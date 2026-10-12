@@ -132,6 +132,19 @@ class PermissionSeeder extends Seeder
                     'notification.view' => 'Lihat & Kelola Notifikasi Sistem',
                 ],
             ],
+            'layanan_workflow' => [
+                'label' => 'Modul 11: Konfigurasi Layanan & Workflow Dinamis',
+                'permissions' => [
+                    'layanan.view' => 'Lihat Daftar & Detail Layanan',
+                    'layanan.create' => 'Tambah Layanan Baru',
+                    'layanan.edit' => 'Ubah Data Layanan & Susunan Workflow',
+                    'layanan.delete' => 'Hapus Layanan',
+                    'workflow.view' => 'Lihat Master Workflow & Field',
+                    'workflow.create' => 'Tambah Master Workflow Baru',
+                    'workflow.edit' => 'Ubah Master Workflow & Konfigurasi Field',
+                    'workflow.delete' => 'Hapus Master Workflow',
+                ],
+            ],
         ];
 
         // 1. Buat / Perbarui seluruh Permission di Database
@@ -158,6 +171,8 @@ class PermissionSeeder extends Seeder
                 'rapat.view', 'rapat.create', 'rapat.edit', 'rapat.presensi', 'rapat.notulensi',
                 'security.audit.view', 'infra.hosting.view', 'infra.deployment.view',
                 'master.instansi.view', 'master.aplikasi.view', 'notification.view',
+                'layanan.view', 'layanan.create', 'layanan.edit', 'layanan.delete',
+                'workflow.view', 'workflow.create', 'workflow.edit', 'workflow.delete',
             ],
 
             'admin_infrastruktur' => [

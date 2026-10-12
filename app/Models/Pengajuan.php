@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'dinilai_oleh',
     'instansi_id',
     'aplikasi_id',
+    'layanan_id',
     'jenis_pengajuan',
     'nama_aplikasi',
     'deskripsi_kebutuhan',
@@ -58,6 +59,11 @@ class Pengajuan extends Model
         return $this->belongsTo(Aplikasi::class);
     }
 
+    public function layanan(): BelongsTo
+    {
+        return $this->belongsTo(Layanan::class, 'layanan_id');
+    }
+
     public function project(): HasOne
     {
         return $this->hasOne(Project::class);
@@ -66,5 +72,24 @@ class Pengajuan extends Model
     public function dokumen(): HasMany
     {
         return $this->hasMany(DokumenPengajuan::class, 'pengajuan_id');
+    }
+
+    public function workflowData(): HasMany
+    {
+        return $this->hasMany(PengajuanWorkflowData::class, 'pengajuan_id');
+    }
+
+    public function getNamaLayananAttribute(): string
+    {
+        if ($this->layanan) {
+            return $this->layanan->nama;
+        }
+
+        return match ($this->jenis_pengajuan) {
+            'new_app' => 'Pembangunan Aplikasi Baru',
+            'app_development' => 'Pengembangan Aplikasi Eksisting',
+            'app_deactivation' => 'Penonaktifan Aplikasi',
+            default => ucfirst(str_replace('_', ' ', (string) $this->jenis_pengajuan)),
+        };
     }
 }
