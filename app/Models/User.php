@@ -77,12 +77,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Dapatkan URL route dashboard sesuai peran user.
+     * Dapatkan URL route dashboard sesuai peran dan hak akses (RBAC Dinamis).
      */
     public function dashboardRoute(): string
     {
         $roleNames = $this->roles->pluck('name')->toArray();
 
+        // 1. Prioritas Utama: Peran Bawaan Sistem
         if (in_array('superadmin', $roleNames, true)) {
             return route('superadmin.dashboard');
         }
@@ -109,6 +110,47 @@ class User extends Authenticatable
 
         if (in_array('ketua_tim', $roleNames, true) || in_array('anggota_tim', $roleNames, true)) {
             return route('tim.dashboard');
+        }
+
+        // 2. Evaluasi Dinamis Berdasarkan Hak Akses Aktif (Untuk Peran Kustom Baru)
+        if ($this->can('eksekutif.dashboard.view')) {
+            return route('eksekutif.dashboard');
+        }
+
+        if ($this->canAny(['pengajuan.review', 'testing.fungsional.view'])) {
+            return route('aptika.dashboard');
+        }
+
+        if ($this->canAny(['infra.deployment.view', 'infra.hosting.view', 'infra.decommission.view'])) {
+            return route('infrastruktur.dashboard');
+        }
+
+        if ($this->canAny(['security.audit.view', 'security.audit.create'])) {
+            return route('persandian.dashboard');
+        }
+
+        if ($this->canAny(['project.update_progres', 'project.upload_dokumen', 'rapat.presensi'])) {
+            return route('tim.dashboard');
+        }
+
+        if ($this->canAny(['pengajuan.create', 'pengajuan.view'])) {
+            return route('opd.dashboard');
+        }
+
+        if ($this->canAny(['rbac.user.view', 'rbac.role.view', 'rbac.matrix.manage'])) {
+            return route('superadmin.dashboard');
+        }
+
+        if ($this->can('master.instansi.view')) {
+            return route('superadmin.instansi.index');
+        }
+
+        if ($this->can('project.view')) {
+            return route('aptika.project.index');
+        }
+
+        if ($this->can('master.aplikasi.view')) {
+            return route('opd.aplikasi.index');
         }
 
         return route('login');

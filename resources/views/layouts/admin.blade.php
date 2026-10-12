@@ -81,6 +81,7 @@
                 @endphp
 
                 <!-- Master User (Menu Dropdown Collapsible) -->
+                @canany(['rbac.user.view', 'rbac.role.view', 'rbac.matrix.manage'])
                 <div class="pt-1">
                     <button type="button" id="masterUserToggleBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer select-none {{ $isMasterUserActive ? 'bg-blue-50 text-[#0D47A1]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                         <div class="flex items-center gap-3">
@@ -91,46 +92,63 @@
                     </button>
 
                     <div id="masterUserSubmenu" class="mt-1 ml-4 pl-3 border-l-2 border-slate-200/80 space-y-1 {{ $isMasterUserActive ? '' : 'hidden' }}">
+                        @can('rbac.user.view')
                         <a href="{{ route('superadmin.user.index') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition {{ request()->routeIs('superadmin.user.*') ? 'bg-[#0D47A1] text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                             <span class="material-symbols-outlined text-[18px]">person</span>
                             <span>User</span>
                         </a>
+                        @endcan
 
+                        @can('rbac.role.view')
                         <a href="{{ route('superadmin.role.index') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition {{ (request()->routeIs('superadmin.role.*') && !request()->routeIs('superadmin.role.permissions*')) ? 'bg-[#0D47A1] text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                             <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
                             <span>Role</span>
                         </a>
+                        @endcan
 
+                        @can('rbac.matrix.manage')
                         <a href="{{ route('superadmin.permission.index') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition {{ (request()->routeIs('superadmin.permission.*') || request()->routeIs('superadmin.role.permissions*')) ? 'bg-[#0D47A1] text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                             <span class="material-symbols-outlined text-[18px]">vpn_key</span>
                             <span>Permission</span>
                         </a>
+                        @endcan
                     </div>
                 </div>
+                @endcanany
 
+                @canany(['master.instansi.view', 'rbac.user.view', 'master.aplikasi.view', 'master.dokumen.view'])
                 <div class="pt-4 pb-2 px-3 text-[11px] font-bold text-slate-400 tracking-wider uppercase">
                     Master Data
                 </div>
 
+                @can('master.instansi.view')
                 <a href="{{ route('superadmin.instansi.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('superadmin.instansi.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                     <span class="material-symbols-outlined text-[20px]">domain</span>
                     <span>Instansi OPD</span>
                 </a>
+                @endcan
 
+                @can('rbac.user.view')
                 <a href="{{ route('superadmin.anggota-tim.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('superadmin.anggota-tim.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                     <span class="material-symbols-outlined text-[20px]">badge</span>
                     <span>Data Anggota Tim</span>
                 </a>
+                @endcan
 
+                @can('master.aplikasi.view')
                 <a href="{{ route('superadmin.aplikasi.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('superadmin.aplikasi.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                     <span class="material-symbols-outlined text-[20px]">apps</span>
                     <span>Master Aplikasi</span>
                 </a>
+                @endcan
 
+                @can('master.dokumen.view')
                 <a href="{{ route('superadmin.master-dokumen.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('superadmin.master-dokumen.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
                     <span class="material-symbols-outlined text-[20px]">folder_special</span>
                     <span>Master Dokumen</span>
                 </a>
+                @endcan
+                @endcanany
             </nav>
         </div>
 
@@ -143,7 +161,7 @@
                 <div class="overflow-hidden">
                     <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->name ?? 'User' }}</p>
                     <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-[#0D47A1] uppercase tracking-wider">
-                        {{ auth()->user()->roles->first()->name ?? 'Role' }}
+                        {{ auth()->user()->roles->first()?->name ? ucwords(str_replace('_', ' ', auth()->user()->roles->first()->name)) : 'Role' }}
                     </span>
                 </div>
             </div>

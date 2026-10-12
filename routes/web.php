@@ -55,130 +55,152 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 // Panel Superadmin
-Route::middleware(['auth', 'role:superadmin'])
+Route::middleware(['auth', 'role_or_permission:superadmin|rbac.user.view|rbac.role.view|rbac.matrix.manage|master.instansi.view|master.dokumen.view|master.aplikasi.create'])
     ->prefix('superadmin')
     ->as('superadmin.')
     ->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role_or_permission:superadmin|rbac.user.view|rbac.role.view|rbac.matrix.manage');
 
         // Master Data
-        Route::resource('instansi', InstansiController::class)->except(['show']);
-        Route::resource('anggota-tim', AnggotaTimController::class)->except(['show'])->parameters(['anggota-tim' => 'anggota_tim']);
-        Route::resource('user', UserController::class)->except(['show']);
-        Route::resource('aplikasi', AplikasiController::class)->except(['show']);
-        Route::resource('master-dokumen', MasterDokumenController::class)->except(['show'])->parameters(['master-dokumen' => 'master_dokumen']);
-        Route::patch('master-dokumen/{master_dokumen}/toggle', [MasterDokumenController::class, 'toggleStatus'])->name('master-dokumen.toggle');
+        Route::resource('instansi', InstansiController::class)->except(['show'])->middleware('role_or_permission:superadmin|master.instansi.view');
+        Route::resource('anggota-tim', AnggotaTimController::class)->except(['show'])->parameters(['anggota-tim' => 'anggota_tim'])->middleware('role_or_permission:superadmin|rbac.user.view');
+        Route::resource('user', UserController::class)->except(['show'])->middleware('role_or_permission:superadmin|rbac.user.view');
+        Route::resource('aplikasi', AplikasiController::class)->except(['show'])->middleware('role_or_permission:superadmin|master.aplikasi.create');
+        Route::resource('master-dokumen', MasterDokumenController::class)->except(['show'])->parameters(['master-dokumen' => 'master_dokumen'])->middleware('role_or_permission:superadmin|master.dokumen.view');
+        Route::patch('master-dokumen/{master_dokumen}/toggle', [MasterDokumenController::class, 'toggleStatus'])->name('master-dokumen.toggle')->middleware('role_or_permission:superadmin|master.dokumen.edit');
 
         // Manajemen Peran & Matriks Hak Akses (Master User: Role & Permission)
-        Route::resource('role', RoleController::class)->except(['create', 'show', 'edit']);
-        Route::get('permission', [RoleController::class, 'permissionsIndex'])->name('permission.index');
-        Route::get('role/{role}/permissions', [RoleController::class, 'permissions'])->name('role.permissions');
-        Route::put('role/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('role.permissions.update');
+        Route::resource('role', RoleController::class)->except(['create', 'show', 'edit'])->middleware('role_or_permission:superadmin|rbac.role.view');
+        Route::get('permission', [RoleController::class, 'permissionsIndex'])->name('permission.index')->middleware('role_or_permission:superadmin|rbac.matrix.manage|rbac.role.view');
+        Route::get('role/{role}/permissions', [RoleController::class, 'permissions'])->name('role.permissions')->middleware('role_or_permission:superadmin|rbac.matrix.manage');
+        Route::put('role/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('role.permissions.update')->middleware('role_or_permission:superadmin|rbac.matrix.manage');
     });
 
-Route::middleware(['auth', 'role:admin_aptika'])->prefix('aptika')->as('aptika.')->group(function () {
-    Route::get('/dashboard', [AptikaDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|project.create|project.manage_tim|testing.fungsional.view|rapat.create'])
+    ->prefix('aptika')
+    ->as('aptika.')
+    ->group(function () {
+        Route::get('/dashboard', [AptikaDashboardController::class, 'index'])->name('dashboard');
 
-    // Telaah Pengajuan Usulan OPD
-    Route::get('/pengajuan', [AptikaPengajuanController::class, 'index'])->name('pengajuan.index');
-    Route::get('/pengajuan/{pengajuan}', [AptikaPengajuanController::class, 'show'])->name('pengajuan.show');
-    Route::patch('/pengajuan/{pengajuan}/review', [AptikaPengajuanController::class, 'review'])->name('pengajuan.review');
+        // Telaah Pengajuan Usulan OPD
+        Route::get('/pengajuan', [AptikaPengajuanController::class, 'index'])->name('pengajuan.index')->middleware('role_or_permission:admin_aptika|pengajuan.review');
+        Route::get('/pengajuan/{pengajuan}', [AptikaPengajuanController::class, 'show'])->name('pengajuan.show')->middleware('role_or_permission:admin_aptika|pengajuan.review');
+        Route::patch('/pengajuan/{pengajuan}/review', [AptikaPengajuanController::class, 'review'])->name('pengajuan.review')->middleware('role_or_permission:admin_aptika|pengajuan.review');
 
-    // Manajemen Proyek
-    Route::resource('project', AptikaProjectController::class)->only(['index', 'create', 'store', 'show']);
-    Route::patch('/project/{project}/status', [AptikaProjectController::class, 'updateStatus'])->name('project.status');
-    Route::patch('/project/{project}/tim', [AptikaProjectController::class, 'updateTim'])->name('project.tim');
-    Route::patch('/project/{project}/dokumen/{dokumen}/review', [AptikaProjectController::class, 'reviewDokumen'])->name('project.dokumen.review');
+        // Manajemen Proyek
+        Route::resource('project', AptikaProjectController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|project.view');
+        Route::resource('project', AptikaProjectController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|project.create');
+        Route::patch('/project/{project}/status', [AptikaProjectController::class, 'updateStatus'])->name('project.status')->middleware('role_or_permission:admin_aptika|project.edit');
+        Route::patch('/project/{project}/tim', [AptikaProjectController::class, 'updateTim'])->name('project.tim')->middleware('role_or_permission:admin_aptika|project.manage_tim');
+        Route::patch('/project/{project}/dokumen/{dokumen}/review', [AptikaProjectController::class, 'reviewDokumen'])->name('project.dokumen.review')->middleware('role_or_permission:admin_aptika|project.review_dokumen');
 
-    // Uji Fungsional Aplikasi
-    Route::resource('testing', AptikaTestingController::class)->only(['index', 'create', 'store']);
+        // Uji Fungsional Aplikasi
+        Route::resource('testing', AptikaTestingController::class)->only(['index'])->middleware('role_or_permission:admin_aptika|testing.fungsional.view');
+        Route::resource('testing', AptikaTestingController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|testing.fungsional.create');
 
-    // Manajemen Rapat Proyek & Notifikasi
-    Route::resource('rapat', AptikaRapatController::class)->only(['index', 'create', 'store', 'show']);
-    Route::patch('/rapat/{rapat}/notulensi', [AptikaRapatController::class, 'notulensi'])->name('rapat.notulensi');
-});
-
-Route::middleware(['auth', 'role:admin_infrastruktur'])->prefix('infrastruktur')->as('infrastruktur.')->group(function () {
-    Route::get('/dashboard', [InfrastrukturDashboardController::class, 'index'])->name('dashboard');
-
-    // Antrean Deployment & Eksekusi Go-Live
-    Route::get('/deployment', [InfrastrukturDeploymentController::class, 'index'])->name('deployment.index');
-    Route::get('/deployment/{project}/create', [InfrastrukturDeploymentController::class, 'create'])->name('deployment.create');
-    Route::post('/deployment/{project}', [InfrastrukturDeploymentController::class, 'store'])->name('deployment.store');
-
-    // Inventaris Server & Hosting
-    Route::resource('hosting', InfrastrukturHostingController::class)->only(['index', 'show', 'edit', 'update']);
-
-    // Antrean Penonaktifan Aplikasi & Decommissioning Server
-    Route::get('/penonaktifan', [InfrastrukturPenonaktifanController::class, 'index'])->name('penonaktifan.index');
-    Route::post('/penonaktifan/{pengajuan}/execute', [InfrastrukturPenonaktifanController::class, 'execute'])->name('penonaktifan.execute');
-});
-
-Route::middleware(['auth', 'role:admin_persandian'])->prefix('persandian')->as('persandian.')->group(function () {
-    Route::get('/dashboard', [PersandianDashboardController::class, 'index'])->name('dashboard');
-
-    // Pengujian Keamanan & Kelaikan Operasi (CSIRT)
-    Route::get('/pengujian', [PersandianPengujianController::class, 'index'])->name('pengujian.index');
-    Route::get('/pengujian/riwayat', [PersandianPengujianController::class, 'riwayat'])->name('pengujian.riwayat');
-    Route::get('/pengujian/{project}/create', [PersandianPengujianController::class, 'create'])->name('pengujian.create');
-    Route::post('/pengujian/{project}', [PersandianPengujianController::class, 'store'])->name('pengujian.store');
-    Route::get('/pengujian/{pengujian}', [PersandianPengujianController::class, 'show'])->name('pengujian.show');
-});
-
-Route::middleware(['auth', 'role:opd'])->prefix('opd')->as('opd.')->group(function () {
-    Route::get('/dashboard', [OpdDashboardController::class, 'index'])->name('dashboard');
-
-    Route::middleware('permission:pengajuan.create')->group(function () {
-        Route::get('/pengajuan/create', [OpdPengajuanController::class, 'create'])->name('pengajuan.create');
-        Route::post('/pengajuan', [OpdPengajuanController::class, 'store'])->name('pengajuan.store');
+        // Manajemen Rapat Proyek & Notifikasi
+        Route::resource('rapat', AptikaRapatController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|rapat.view');
+        Route::resource('rapat', AptikaRapatController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|rapat.create');
+        Route::patch('/rapat/{rapat}/notulensi', [AptikaRapatController::class, 'notulensi'])->name('rapat.notulensi')->middleware('role_or_permission:admin_aptika|rapat.notulensi');
     });
 
-    Route::middleware('permission:pengajuan.view')->group(function () {
-        Route::get('/pengajuan', [OpdPengajuanController::class, 'index'])->name('pengajuan.index');
-        Route::get('/pengajuan/{pengajuan}', [OpdPengajuanController::class, 'show'])->name('pengajuan.show');
+Route::middleware(['auth', 'role_or_permission:admin_infrastruktur|infra.deployment.view|infra.hosting.view|infra.decommission.view'])
+    ->prefix('infrastruktur')
+    ->as('infrastruktur.')
+    ->group(function () {
+        Route::get('/dashboard', [InfrastrukturDashboardController::class, 'index'])->name('dashboard');
+
+        // Antrean Deployment & Eksekusi Go-Live
+        Route::get('/deployment', [InfrastrukturDeploymentController::class, 'index'])->name('deployment.index')->middleware('role_or_permission:admin_infrastruktur|infra.deployment.view');
+        Route::get('/deployment/{project}/create', [InfrastrukturDeploymentController::class, 'create'])->name('deployment.create')->middleware('role_or_permission:admin_infrastruktur|infra.deployment.execute');
+        Route::post('/deployment/{project}', [InfrastrukturDeploymentController::class, 'store'])->name('deployment.store')->middleware('role_or_permission:admin_infrastruktur|infra.deployment.execute');
+
+        // Inventaris Server & Hosting
+        Route::resource('hosting', InfrastrukturHostingController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_infrastruktur|infra.hosting.view');
+        Route::resource('hosting', InfrastrukturHostingController::class)->only(['edit', 'update'])->middleware('role_or_permission:admin_infrastruktur|infra.hosting.edit');
+
+        // Antrean Penonaktifan Aplikasi & Decommissioning Server
+        Route::get('/penonaktifan', [InfrastrukturPenonaktifanController::class, 'index'])->name('penonaktifan.index')->middleware('role_or_permission:admin_infrastruktur|infra.decommission.view');
+        Route::post('/penonaktifan/{pengajuan}/execute', [InfrastrukturPenonaktifanController::class, 'execute'])->name('penonaktifan.execute')->middleware('role_or_permission:admin_infrastruktur|infra.decommission.execute');
     });
 
-    Route::delete('/pengajuan/{pengajuan}', [OpdPengajuanController::class, 'destroy'])
-        ->middleware('permission:pengajuan.delete')
-        ->name('pengajuan.destroy');
+Route::middleware(['auth', 'role_or_permission:admin_persandian|security.audit.view|security.audit.create'])
+    ->prefix('persandian')
+    ->as('persandian.')
+    ->group(function () {
+        Route::get('/dashboard', [PersandianDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/aplikasi', [OpdAplikasiController::class, 'index'])
-        ->middleware('permission:master.aplikasi.view')
-        ->name('aplikasi.index');
-});
+        // Pengujian Keamanan & Kelaikan Operasi (CSIRT)
+        Route::get('/pengujian', [PersandianPengujianController::class, 'index'])->name('pengujian.index')->middleware('role_or_permission:admin_persandian|security.audit.view');
+        Route::get('/pengujian/riwayat', [PersandianPengujianController::class, 'riwayat'])->name('pengujian.riwayat')->middleware('role_or_permission:admin_persandian|security.audit.view');
+        Route::get('/pengujian/{project}/create', [PersandianPengujianController::class, 'create'])->name('pengujian.create')->middleware('role_or_permission:admin_persandian|security.audit.create');
+        Route::post('/pengujian/{project}', [PersandianPengujianController::class, 'store'])->name('pengujian.store')->middleware('role_or_permission:admin_persandian|security.audit.create');
+        Route::get('/pengujian/{pengujian}', [PersandianPengujianController::class, 'show'])->name('pengujian.show')->middleware('role_or_permission:admin_persandian|security.audit.view');
+    });
 
-Route::middleware(['auth', 'role:kepala_bidang|kepala_dinas'])->prefix('eksekutif')->as('eksekutif.')->group(function () {
-    Route::get('/dashboard', [EksekutifDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'permission:pengajuan.view|pengajuan.create|master.aplikasi.view'])
+    ->prefix('opd')
+    ->as('opd.')
+    ->group(function () {
+        Route::get('/dashboard', [OpdDashboardController::class, 'index'])->name('dashboard');
 
-    // Monitoring Portofolio Proyek
-    Route::get('/project', [EksekutifProjectController::class, 'index'])->name('project.index');
-    Route::get('/project/{project}', [EksekutifProjectController::class, 'show'])->name('project.show');
+        Route::middleware('permission:pengajuan.create')->group(function () {
+            Route::get('/pengajuan/create', [OpdPengajuanController::class, 'create'])->name('pengajuan.create');
+            Route::post('/pengajuan', [OpdPengajuanController::class, 'store'])->name('pengajuan.store');
+        });
 
-    // Persetujuan / Approval Penundaan Proyek (Khusus/Diutamakan Kabid)
-    Route::get('/penundaan', [EksekutifPenundaanController::class, 'index'])->name('penundaan.index');
-    Route::post('/penundaan/{penundaan}/approve', [EksekutifPenundaanController::class, 'approve'])->name('penundaan.approve');
-    Route::post('/penundaan/{penundaan}/reject', [EksekutifPenundaanController::class, 'reject'])->name('penundaan.reject');
+        Route::middleware('permission:pengajuan.view')->group(function () {
+            Route::get('/pengajuan', [OpdPengajuanController::class, 'index'])->name('pengajuan.index');
+            Route::get('/pengajuan/{pengajuan}', [OpdPengajuanController::class, 'show'])->name('pengajuan.show');
+        });
 
-    // Katalog Aplikasi Daerah
-    Route::get('/aplikasi', [EksekutifAplikasiController::class, 'index'])->name('aplikasi.index');
+        Route::delete('/pengajuan/{pengajuan}', [OpdPengajuanController::class, 'destroy'])
+            ->middleware('permission:pengajuan.delete')
+            ->name('pengajuan.destroy');
 
-    // Laporan Eksekutif (Print-Ready)
-    Route::get('/laporan', [EksekutifLaporanController::class, 'index'])->name('laporan.index');
-});
+        Route::get('/aplikasi', [OpdAplikasiController::class, 'index'])
+            ->middleware('permission:master.aplikasi.view')
+            ->name('aplikasi.index');
+    });
 
-Route::middleware(['auth', 'role:ketua_tim|anggota_tim'])->prefix('tim')->as('tim.')->group(function () {
-    Route::get('/dashboard', [TimDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role_or_permission:kepala_bidang|kepala_dinas|eksekutif.dashboard.view|eksekutif.penundaan.review|eksekutif.laporan.view|project.view'])
+    ->prefix('eksekutif')
+    ->as('eksekutif.')
+    ->group(function () {
+        Route::get('/dashboard', [EksekutifDashboardController::class, 'index'])->name('dashboard')->middleware('role_or_permission:kepala_bidang|kepala_dinas|eksekutif.dashboard.view');
 
-    // Manajemen Proyek Tim
-    Route::get('/project', [TimProjectController::class, 'index'])->name('project.index');
-    Route::get('/project/{project}', [TimProjectController::class, 'show'])->name('project.show');
-    Route::patch('/project/{project}/progres', [TimProjectController::class, 'updateProgres'])->name('project.progres');
-    Route::post('/project/{project}/tahapan', [TimProjectController::class, 'storeTahapan'])->name('project.tahapan');
-    Route::post('/project/{project}/dokumen', [TimProjectController::class, 'storeDokumen'])->name('project.dokumen');
-    Route::post('/project/{project}/penundaan', [TimProjectController::class, 'storePenundaan'])->name('project.penundaan');
+        // Monitoring Portofolio Proyek
+        Route::get('/project', [EksekutifProjectController::class, 'index'])->name('project.index')->middleware('role_or_permission:kepala_bidang|kepala_dinas|project.view|eksekutif.dashboard.view');
+        Route::get('/project/{project}', [EksekutifProjectController::class, 'show'])->name('project.show')->middleware('role_or_permission:kepala_bidang|kepala_dinas|project.view|eksekutif.dashboard.view');
 
-    // Rapat & Presensi
-    Route::get('/rapat', [TimRapatController::class, 'index'])->name('rapat.index');
-    Route::get('/rapat/{rapat}', [TimRapatController::class, 'show'])->name('rapat.show');
-    Route::post('/rapat/{rapat}/presensi', [TimRapatController::class, 'presensi'])->name('rapat.presensi');
-});
+        // Persetujuan / Approval Penundaan Proyek (Khusus/Diutamakan Kabid)
+        Route::get('/penundaan', [EksekutifPenundaanController::class, 'index'])->name('penundaan.index')->middleware('role_or_permission:kepala_bidang|kepala_dinas|eksekutif.penundaan.review');
+        Route::post('/penundaan/{penundaan}/approve', [EksekutifPenundaanController::class, 'approve'])->name('penundaan.approve')->middleware('role_or_permission:kepala_bidang|kepala_dinas|eksekutif.penundaan.review');
+        Route::post('/penundaan/{penundaan}/reject', [EksekutifPenundaanController::class, 'reject'])->name('penundaan.reject')->middleware('role_or_permission:kepala_bidang|kepala_dinas|eksekutif.penundaan.review');
+
+        // Katalog Aplikasi Daerah
+        Route::get('/aplikasi', [EksekutifAplikasiController::class, 'index'])->name('aplikasi.index')->middleware('role_or_permission:kepala_bidang|kepala_dinas|master.aplikasi.view');
+
+        // Laporan Eksekutif (Print-Ready)
+        Route::get('/laporan', [EksekutifLaporanController::class, 'index'])->name('laporan.index')->middleware('role_or_permission:kepala_bidang|kepala_dinas|eksekutif.laporan.view');
+    });
+
+Route::middleware(['auth', 'role_or_permission:ketua_tim|anggota_tim|project.view|project.update_progres|project.upload_dokumen|project.ajukan_penundaan|rapat.view|rapat.presensi'])
+    ->prefix('tim')
+    ->as('tim.')
+    ->group(function () {
+        Route::get('/dashboard', [TimDashboardController::class, 'index'])->name('dashboard');
+
+        // Manajemen Proyek Tim
+        Route::get('/project', [TimProjectController::class, 'index'])->name('project.index')->middleware('role_or_permission:ketua_tim|anggota_tim|project.view');
+        Route::get('/project/{project}', [TimProjectController::class, 'show'])->name('project.show')->middleware('role_or_permission:ketua_tim|anggota_tim|project.view');
+        Route::patch('/project/{project}/progres', [TimProjectController::class, 'updateProgres'])->name('project.progres')->middleware('role_or_permission:ketua_tim|anggota_tim|project.update_progres');
+        Route::post('/project/{project}/tahapan', [TimProjectController::class, 'storeTahapan'])->name('project.tahapan')->middleware('role_or_permission:ketua_tim|anggota_tim|project.update_progres');
+        Route::post('/project/{project}/dokumen', [TimProjectController::class, 'storeDokumen'])->name('project.dokumen')->middleware('role_or_permission:ketua_tim|anggota_tim|project.upload_dokumen');
+        Route::post('/project/{project}/penundaan', [TimProjectController::class, 'storePenundaan'])->name('project.penundaan')->middleware('role_or_permission:ketua_tim|anggota_tim|project.ajukan_penundaan');
+
+        // Rapat & Presensi
+        Route::get('/rapat', [TimRapatController::class, 'index'])->name('rapat.index')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.view');
+        Route::get('/rapat/{rapat}', [TimRapatController::class, 'show'])->name('rapat.show')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.view');
+        Route::post('/rapat/{rapat}/presensi', [TimRapatController::class, 'presensi'])->name('rapat.presensi')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.presensi');
+    });

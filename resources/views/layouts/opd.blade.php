@@ -130,7 +130,7 @@
                 <div class="overflow-hidden">
                     <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->name ?? 'Operator OPD' }}</p>
                     <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
-                        Operator OPD
+                        {{ auth()->user()->roles->first()?->name ? ucwords(str_replace('_', ' ', auth()->user()->roles->first()->name)) : 'Operator OPD' }}
                     </span>
                 </div>
             </div>
