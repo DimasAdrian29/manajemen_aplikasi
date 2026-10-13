@@ -30,9 +30,4 @@ class Instansi extends Model
     {
         return $this->hasMany(Pengajuan::class);
     }
-
-    public function inventarisAplikasi(): HasMany
-    {
-        return $this->hasMany(InventarisAplikasi::class);
-    }
 }

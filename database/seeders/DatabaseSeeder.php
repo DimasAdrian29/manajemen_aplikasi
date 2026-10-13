@@ -414,7 +414,6 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(LayananWorkflowSeeder::class);
-        $this->call(InventarisAplikasiSeeder::class);
 
         $layananBaru = Layanan::where('slug', 'pembangunan-aplikasi-baru')->first();
         $layananPengembangan = Layanan::where('slug', 'pengembangan-aplikasi-eksisting')->first();

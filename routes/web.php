@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Aptika\DashboardController as AptikaDashboardController;
-use App\Http\Controllers\Aptika\InventarisAplikasiController as AptikaInventarisAplikasiController;
 use App\Http\Controllers\Aptika\LayananController as AptikaLayananController;
 use App\Http\Controllers\Aptika\PengajuanController as AptikaPengajuanController;
 use App\Http\Controllers\Aptika\ProjectController as AptikaProjectController;
@@ -79,7 +78,7 @@ Route::middleware(['auth', 'role_or_permission:superadmin|rbac.user.view|rbac.ro
         Route::put('role/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('role.permissions.update')->middleware('role_or_permission:superadmin|rbac.matrix.manage');
     });
 
-Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|project.create|project.manage_tim|testing.fungsional.view|rapat.create|layanan.view|workflow.view|inventaris.view'])
+Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|project.create|project.manage_tim|testing.fungsional.view|rapat.create|layanan.view|workflow.view'])
     ->prefix('aptika')
     ->as('aptika.')
     ->group(function () {
@@ -119,12 +118,6 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::put('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'updateField'])->name('workflow.field.update')->middleware('role_or_permission:admin_aptika|workflow.edit');
         Route::delete('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'destroyField'])->name('workflow.field.destroy')->middleware('role_or_permission:admin_aptika|workflow.edit');
         Route::patch('workflow/{workflow}/field/reorder', [AptikaWorkflowController::class, 'reorderField'])->name('workflow.field.reorder')->middleware('role_or_permission:admin_aptika|workflow.edit');
-
-        // Monitoring Daftar Aplikasi Pemerintah Provinsi Riau
-        Route::resource('inventaris-aplikasi', AptikaInventarisAplikasiController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|inventaris.create');
-        Route::resource('inventaris-aplikasi', AptikaInventarisAplikasiController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|inventaris.view');
-        Route::resource('inventaris-aplikasi', AptikaInventarisAplikasiController::class)->only(['edit', 'update'])->middleware('role_or_permission:admin_aptika|inventaris.edit');
-        Route::resource('inventaris-aplikasi', AptikaInventarisAplikasiController::class)->only(['destroy'])->middleware('role_or_permission:admin_aptika|inventaris.delete');
     });
 
 Route::middleware(['auth', 'role_or_permission:admin_infrastruktur|infra.deployment.view|infra.hosting.view|infra.decommission.view'])
