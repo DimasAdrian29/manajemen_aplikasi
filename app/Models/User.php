@@ -117,7 +117,7 @@ class User extends Authenticatable
             return route('eksekutif.dashboard');
         }
 
-        if ($this->canAny(['pengajuan.review', 'testing.fungsional.view'])) {
+        if ($this->canAny(['pengajuan.review', 'testing.fungsional.view', 'inventaris.view'])) {
             return route('aptika.dashboard');
         }
 

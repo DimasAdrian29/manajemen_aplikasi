@@ -145,6 +145,15 @@ class PermissionSeeder extends Seeder
                     'workflow.delete' => 'Hapus Master Workflow',
                 ],
             ],
+            'inventaris_aplikasi' => [
+                'label' => 'Modul 12: Monitoring Daftar Aplikasi Pemprov Riau',
+                'permissions' => [
+                    'inventaris.view' => 'Lihat Monitoring Daftar Aplikasi',
+                    'inventaris.create' => 'Tambah Data Aplikasi ke Daftar Monitoring',
+                    'inventaris.edit' => 'Ubah Data Aplikasi pada Daftar Monitoring',
+                    'inventaris.delete' => 'Hapus Data Aplikasi dari Daftar Monitoring',
+                ],
+            ],
         ];
 
         // 1. Buat / Perbarui seluruh Permission di Database
@@ -173,6 +182,7 @@ class PermissionSeeder extends Seeder
                 'master.instansi.view', 'master.aplikasi.view', 'notification.view',
                 'layanan.view', 'layanan.create', 'layanan.edit', 'layanan.delete',
                 'workflow.view', 'workflow.create', 'workflow.edit', 'workflow.delete',
+                'inventaris.view', 'inventaris.create', 'inventaris.edit', 'inventaris.delete',
             ],
 
             'admin_infrastruktur' => [
