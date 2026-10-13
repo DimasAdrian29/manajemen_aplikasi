@@ -220,3 +220,5 @@ Route::middleware(['auth', 'role_or_permission:ketua_tim|anggota_tim|project.vie
         Route::get('/rapat/{rapat}', [TimRapatController::class, 'show'])->name('rapat.show')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.view');
         Route::post('/rapat/{rapat}/presensi', [TimRapatController::class, 'presensi'])->name('rapat.presensi')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.presensi');
     });
+
+require __DIR__.'/monitoring.php';

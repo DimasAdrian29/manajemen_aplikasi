@@ -168,6 +168,8 @@
                         <span>Laporan Eksekutif</span>
                     </a>
                 @endcan
+
+                @include('eksekutif.monitoring-aplikasi._menu')
             </nav>
         </div>
 
