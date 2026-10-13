@@ -136,7 +136,7 @@
                             </td>
                             <td class="py-4 px-6 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    @if (!$isSystemRole)
+                                    @if (!$isSuperadmin)
                                         <!-- Edit Role Name -->
                                         <button type="button" onclick="openModalEditRole({{ $item->id }}, '{{ $item->name }}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D47A1] hover:bg-slate-100 border border-slate-200 transition cursor-pointer" title="Ubah Nama Peran">
                                             <span class="material-symbols-outlined text-[16px]">edit</span>
@@ -152,15 +152,10 @@
                                                 <span>Hapus</span>
                                             </button>
                                         </form>
-                                    @elseif ($isSuperadmin)
+                                    @else
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200" title="Peran Superadmin dilindungi sistem">
                                             <span class="material-symbols-outlined text-[14px]">lock</span>
                                             <span>Terkunci</span>
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 bg-slate-100 border border-slate-200" title="Peran bawaan sistem dilindungi dari perubahan nama & penghapusan">
-                                            <span class="material-symbols-outlined text-[14px]">lock</span>
-                                            <span>Sistem Bawaan</span>
                                         </span>
                                     @endif
                                 </div>

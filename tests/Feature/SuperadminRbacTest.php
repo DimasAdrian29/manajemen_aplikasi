@@ -142,30 +142,38 @@ class SuperadminRbacTest extends TestCase
         $this->assertDatabaseHas('roles', ['name' => 'superadmin']);
     }
 
-    public function test_system_roles_cannot_be_deleted(): void
+    public function test_superadmin_role_cannot_be_renamed(): void
     {
-        $role = Role::where('name', 'ketua_tim')->first();
-
-        $response = $this->actingAs($this->superadmin)->delete(route('superadmin.role.destroy', $role));
-
-        $response->assertRedirect(route('superadmin.role.index'));
-        $response->assertSessionHas('error');
-
-        $this->assertDatabaseHas('roles', ['name' => 'ketua_tim']);
-    }
-
-    public function test_system_roles_cannot_be_renamed(): void
-    {
-        $role = Role::where('name', 'ketua_tim')->first();
+        $role = Role::where('name', 'superadmin')->first();
 
         $response = $this->actingAs($this->superadmin)->put(route('superadmin.role.update', $role), [
-            'name' => 'lead_developer',
+            'name' => 'root_admin',
         ]);
 
         $response->assertRedirect(route('superadmin.role.index'));
         $response->assertSessionHas('error');
 
-        $this->assertDatabaseHas('roles', ['name' => 'ketua_tim']);
+        $this->assertDatabaseHas('roles', ['name' => 'superadmin']);
+    }
+
+    public function test_non_superadmin_system_roles_can_be_renamed_and_deleted(): void
+    {
+        $role = Role::where('name', 'ketua_tim')->first();
+
+        // Rename is allowed
+        $response = $this->actingAs($this->superadmin)->put(route('superadmin.role.update', $role), [
+            'name' => 'lead_developer',
+        ]);
+
+        $response->assertRedirect(route('superadmin.role.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('roles', ['name' => 'lead_developer']);
+
+        // Delete is allowed
+        $deleteResponse = $this->actingAs($this->superadmin)->delete(route('superadmin.role.destroy', $role->fresh()));
+        $deleteResponse->assertRedirect(route('superadmin.role.index'));
+        $deleteResponse->assertSessionHas('success');
+        $this->assertDatabaseMissing('roles', ['name' => 'lead_developer']);
     }
 
     public function test_superadmin_can_delete_role(): void

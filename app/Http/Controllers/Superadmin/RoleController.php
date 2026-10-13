@@ -15,17 +15,10 @@ class RoleController extends Controller
 {
     /**
      * Peran sistem yang dilindungi mutlak dari penghapusan / pengubahan nama.
+     * Hanya peran 'superadmin' yang tidak boleh diubah atau dihapus.
      */
     protected array $protectedRoles = [
         'superadmin',
-        'admin_aptika',
-        'admin_infrastruktur',
-        'admin_persandian',
-        'opd',
-        'kepala_bidang',
-        'kepala_dinas',
-        'ketua_tim',
-        'anggota_tim',
     ];
 
     /**
@@ -72,9 +65,9 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role): RedirectResponse
     {
-        if (in_array($role->name, $this->protectedRoles, true)) {
+        if ($role->name === 'superadmin' || in_array($role->name, $this->protectedRoles, true)) {
             return redirect()->route('superadmin.role.index')
-                ->with('error', "Peran sistem inti '{$role->name}' tidak dapat diubah namanya.");
+                ->with('error', "Peran sistem inti 'superadmin' tidak dapat diubah namanya.");
         }
 
         $request->validate([
@@ -97,9 +90,9 @@ class RoleController extends Controller
      */
     public function destroy(Role $role): RedirectResponse
     {
-        if (in_array($role->name, $this->protectedRoles, true)) {
+        if ($role->name === 'superadmin' || in_array($role->name, $this->protectedRoles, true)) {
             return redirect()->route('superadmin.role.index')
-                ->with('error', "Peran utama '{$role->name}' dilindungi dan tidak dapat dihapus.");
+                ->with('error', "Peran utama 'superadmin' dilindungi dan tidak dapat dihapus.");
         }
 
         $userCount = $role->users()->count();
