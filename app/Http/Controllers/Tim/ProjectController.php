@@ -113,7 +113,9 @@ class ProjectController extends Controller
 
                 $lw = $project->pengajuan?->layanan?->workflows()
                     ->whereHas('workflow', function ($q) use ($statusVal) {
-                        $q->where('slug', $statusVal);
+                        $q->where('slug', $statusVal)
+                            ->orWhere('slug', str_replace('_', '-', $statusVal))
+                            ->orWhere('slug', str_replace('-', '_', $statusVal));
                     })->first();
 
                 if ($lw) {
@@ -121,6 +123,18 @@ class ProjectController extends Controller
                     $project->pengajuan->workflowData()
                         ->where('layanan_workflow_id', $lw->id)
                         ->update(['status' => 'in_progress']);
+
+                    // Selesaikan step-step sebelumnya yang telah terlewati
+                    $project->pengajuan->workflowData()
+                        ->whereHas('layananWorkflow', function ($q) use ($lw) {
+                            $q->where('urutan', '<', $lw->urutan);
+                        })
+                        ->where('status', '!=', 'completed')
+                        ->update([
+                            'status' => 'completed',
+                            'completed_by' => auth()->id(),
+                            'completed_at' => now(),
+                        ]);
                 }
             }
             $project->update($updateData);

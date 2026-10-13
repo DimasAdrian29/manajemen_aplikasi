@@ -312,4 +312,98 @@ class DynamicLayananAndWorkflowTest extends TestCase
         $this->assertNotNull($devStep);
         $this->assertEquals('in_progress', $devStep->status);
     }
+
+    public function test_opd_can_open_create_form_and_render_all_layanan_workflow_timelines_and_fields(): void
+    {
+        $response = $this->actingAs($this->opdUser)
+            ->get(route('opd.pengajuan.create', ['layanan' => 'penonaktifan-aplikasi']))
+            ->assertStatus(200)
+            ->assertSee('Penonaktifan Aplikasi')
+            ->assertSee('Decommissioning Server')
+            ->assertSee('wf_timeline_')
+            ->assertSee('step1_pane_');
+    }
+
+    public function test_opd_can_submit_custom_layanan_with_custom_workflow_fields(): void
+    {
+        Storage::fake('public');
+
+        // Create a custom workflow and service
+        $customWorkflow = Workflow::create([
+            'nama' => 'Pemeriksaan Integritas Modul',
+            'slug' => 'pemeriksaan-integritas-modul',
+            'deskripsi' => 'Verifikasi keaslian dan integritas source code.',
+            'ikon' => 'fingerprint',
+        ]);
+
+        $customFieldDoc = $customWorkflow->fields()->create([
+            'label' => 'Pakta Integritas Vendor',
+            'tipe' => 'file_upload',
+            'master_dokumen_id' => null,
+            'wajib' => true,
+            'urutan' => 1,
+        ]);
+
+        $customFieldCheck = $customWorkflow->fields()->create([
+            'label' => 'Telah lolos review kode internal',
+            'tipe' => 'checklist',
+            'wajib' => true,
+            'urutan' => 2,
+        ]);
+
+        $customLayanan = Layanan::create([
+            'nama' => 'Layanan Audit Source Code',
+            'slug' => 'layanan-audit-source-code',
+            'deskripsi' => 'Pengujian keamanan dan audit kode.',
+            'ikon' => 'code',
+            'warna' => '#6366F1',
+            'is_active' => true,
+            'urutan' => 10,
+        ]);
+
+        $customLayanan->workflows()->create([
+            'workflow_id' => $customWorkflow->id,
+            'urutan' => 1,
+            'is_active' => true,
+        ]);
+
+        $postData = [
+            'layanan_id' => $customLayanan->id,
+            'nama_aplikasi' => 'Aplikasi Audit Custom',
+            'deskripsi_kebutuhan' => 'Deskripsi permohonan audit source code aplikasi dinas.',
+            'nama_pemohon' => 'Hendra Pemohon',
+            'no_hp_pemohon' => '081234567891',
+            'workflow_files' => [
+                $customFieldDoc->id => UploadedFile::fake()->create('pakta.pdf', 100, 'application/pdf'),
+            ],
+            'fields' => [
+                $customFieldCheck->id => '1',
+            ],
+        ];
+
+        $response = $this->actingAs($this->opdUser)
+            ->post(route('opd.pengajuan.store'), $postData);
+
+        $pengajuan = Pengajuan::where('nama_aplikasi', 'Aplikasi Audit Custom')->first();
+        $this->assertNotNull($pengajuan);
+        $this->assertEquals($customLayanan->id, $pengajuan->layanan_id);
+
+        $response->assertRedirect(route('opd.pengajuan.show', $pengajuan));
+
+        // Verify workflow data and field data are saved
+        $pwData = $pengajuan->workflowData()->first();
+        $this->assertNotNull($pwData);
+        $this->assertEquals('completed', $pwData->status);
+
+        $this->assertDatabaseHas('pengajuan_field_data', [
+            'pengajuan_workflow_data_id' => $pwData->id,
+            'workflow_field_id' => $customFieldCheck->id,
+            'value' => '1',
+        ]);
+
+        $this->assertDatabaseHas('pengajuan_field_data', [
+            'pengajuan_workflow_data_id' => $pwData->id,
+            'workflow_field_id' => $customFieldDoc->id,
+        ]);
+    }
 }

@@ -19,6 +19,7 @@ class Layanan extends Model
         'deskripsi',
         'ikon',
         'warna',
+        'memerlukan_aplikasi_eksisting',
         'is_active',
         'urutan',
     ];
@@ -29,9 +30,20 @@ class Layanan extends Model
     protected function casts(): array
     {
         return [
+            'memerlukan_aplikasi_eksisting' => 'boolean',
             'is_active' => 'boolean',
             'urutan' => 'integer',
         ];
+    }
+
+    public function isAplikasiBaru(): bool
+    {
+        return ! $this->memerlukan_aplikasi_eksisting;
+    }
+
+    public function isAplikasiEksisting(): bool
+    {
+        return (bool) $this->memerlukan_aplikasi_eksisting;
     }
 
     public function workflows(): HasMany

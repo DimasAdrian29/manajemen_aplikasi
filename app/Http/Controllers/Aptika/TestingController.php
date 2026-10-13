@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Aptika;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\TestingAplikasi;
+use App\Services\Workflow\WorkflowTransitionService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,10 @@ class TestingController extends Controller
         return view('aptika.testing.index', compact('testings', 'readyProjects', 'statusValidasi'));
     }
 
+    public function __construct(
+        protected WorkflowTransitionService $workflowService
+    ) {}
+
     /**
      * Form input hasil uji fungsional untuk proyek tertentu.
      */
@@ -43,13 +48,13 @@ class TestingController extends Controller
     {
         $selectedProjectId = $request->query('project_id');
 
-        $projects = Project::with(['aplikasi.instansi'])
+        $projects = Project::with(['aplikasi.instansi', 'currentWorkflow.workflow.fields', 'pengajuan'])
             ->whereIn('status', ['in_development', 'functional_testing', 'security_testing', 'initiated'])
             ->get();
 
         $selectedProject = null;
         if ($selectedProjectId) {
-            $selectedProject = Project::with(['aplikasi.instansi'])->find($selectedProjectId);
+            $selectedProject = Project::with(['aplikasi.instansi', 'currentWorkflow.workflow.fields', 'pengajuan'])->find($selectedProjectId);
         }
 
         return view('aptika.testing.create', compact('projects', 'selectedProject'));
@@ -70,7 +75,7 @@ class TestingController extends Controller
         ]);
 
         return DB::transaction(function () use ($request) {
-            $project = Project::findOrFail($request->project_id);
+            $project = Project::with(['currentWorkflow.workflow', 'pengajuan'])->findOrFail($request->project_id);
 
             $filePath = null;
             if ($request->hasFile('file_hasil')) {
@@ -90,20 +95,38 @@ class TestingController extends Controller
                 'tanggal_validasi' => Carbon::now(),
             ]);
 
-            // Alur Transisi Proyek Berdasarkan Hasil Pengujian Fungsional
+            // Alur Transisi Dinamis Proyek Berdasarkan Pipeline Layanan
             if ($request->input('status_validasi') === 'lulus') {
-                // Lulus Uji Fungsional -> Proyek maju ke Uji Keamanan (Admin Persandian)
-                $project->update([
-                    'status' => 'security_testing',
-                    'progres_total' => max($project->progres_total, 75),
-                ]);
-                $msg = "Uji Fungsional LULUS! Proyek {$project->nama_project} otomatis diteruskan ke tahap Uji Keamanan Informasi (Bidang Persandian).";
+                $dynamicInput = [
+                    'fields' => $request->input('workflow_fields', []),
+                    'files' => $request->file('workflow_files', []),
+                ];
+
+                $nextWorkflow = $this->workflowService->advance(
+                    $project,
+                    auth()->user(),
+                    $request->input('catatan_validasi') ?: 'Uji Fungsional LULUS.',
+                    $dynamicInput
+                );
+
+                if ($nextWorkflow) {
+                    $msg = "Uji Fungsional LULUS! Proyek {$project->nama_project} otomatis diteruskan ke tahap: {$nextWorkflow->workflow->nama}.";
+                } else {
+                    $msg = "Uji Fungsional LULUS! Seluruh tahapan alur proyek {$project->nama_project} telah selesai (LIVE).";
+                }
             } elseif ($request->input('status_validasi') === 'perbaikan') {
-                // Dikembalikan ke Tim Pengembang untuk perbaikan bug
-                $project->update(['status' => 'in_development']);
+                $this->workflowService->sendForRevision(
+                    $project,
+                    auth()->user(),
+                    $request->input('catatan_validasi') ?: 'Perbaikan diperlukan dari hasil uji fungsional.'
+                );
                 $msg = "Catatan perbaikan telah disimpan. Proyek {$project->nama_project} dikembalikan ke Tim Pengembang untuk revisi modul.";
             } else {
-                $project->update(['status' => 'in_development']);
+                $this->workflowService->sendForRevision(
+                    $project,
+                    auth()->user(),
+                    $request->input('catatan_validasi') ?: 'Uji fungsional tidak lulus.'
+                );
                 $msg = "Hasil uji tidak lulus telah dicatat pada proyek {$project->nama_project}.";
             }
 

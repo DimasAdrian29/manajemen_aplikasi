@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Instansi;
 use App\Models\Layanan;
 use App\Models\Pengajuan;
+use App\Services\Workflow\WorkflowFieldService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -103,6 +104,14 @@ class PengajuanController extends Controller
             })->first();
 
         if ($telaahStep) {
+            // Simpan formulir dinamis jika ada
+            if ($request->filled('workflow_fields') || $request->hasFile('workflow_files')) {
+                app(WorkflowFieldService::class)->saveFieldValues($telaahStep, [
+                    'fields' => $request->input('workflow_fields', []),
+                    'files' => $request->file('workflow_files', []),
+                ]);
+            }
+
             if ($request->input('status') === 'approved') {
                 $telaahStep->update([
                     'status' => 'completed',

@@ -65,6 +65,9 @@ class LayananController extends Controller
             $data['urutan'] = (Layanan::max('urutan') ?? 0) + 1;
         }
 
+        $data['is_active'] = $request->boolean('is_active');
+        $data['memerlukan_aplikasi_eksisting'] = $request->boolean('memerlukan_aplikasi_eksisting');
+
         $layanan = Layanan::create($data);
 
         return redirect()->route('aptika.layanan.show', $layanan)
@@ -102,6 +105,9 @@ class LayananController extends Controller
     public function update(LayananRequest $request, Layanan $layanan): RedirectResponse
     {
         $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active');
+        $data['memerlukan_aplikasi_eksisting'] = $request->boolean('memerlukan_aplikasi_eksisting');
+
         $layanan->update($data);
 
         return redirect()->route('aptika.layanan.show', $layanan)

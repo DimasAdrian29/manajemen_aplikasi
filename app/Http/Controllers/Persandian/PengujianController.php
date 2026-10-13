@@ -7,6 +7,7 @@ use App\Http\Requests\Persandian\PengujianKeamananRequest;
 use App\Models\PengujianKeamanan;
 use App\Models\Project;
 use App\Notifications\HasilUjiKeamananNotification;
+use App\Services\Workflow\WorkflowTransitionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,6 +45,10 @@ class PengujianController extends Controller
         return view('persandian.pengujian.index', compact('projects'));
     }
 
+    public function __construct(
+        protected WorkflowTransitionService $workflowService
+    ) {}
+
     /**
      * Show the form for creating a new security audit.
      */
@@ -61,6 +66,7 @@ class PengujianController extends Controller
             'tim.user',
             'testingAplikasi',
             'pengujianKeamanan.tester',
+            'currentWorkflow.workflow.fields',
         ]);
 
         return view('persandian.pengujian.create', compact('project'));
@@ -86,7 +92,9 @@ class PengujianController extends Controller
             $filePath = $file->storeAs("security_testing/project_{$project->id}", $filename, 'public');
         }
 
-        $pengujian = DB::transaction(function () use ($project, $validated, $filePath) {
+        $nextWorkflow = null;
+
+        $pengujian = DB::transaction(function () use ($project, $validated, $filePath, $request, &$nextWorkflow) {
             $pengujian = PengujianKeamanan::create([
                 'project_id' => $project->id,
                 'user_id' => auth()->id(),
@@ -101,23 +109,31 @@ class PengujianController extends Controller
                 'file_hasil' => $filePath,
             ]);
 
-            // Status transitions based on security audit result
+            // Status transitions based on security audit result using WorkflowTransitionService
             if ($validated['hasil'] === 'lulus') {
-                // Passed -> Move forward to deployment (Admin Infrastruktur)
-                $project->update([
-                    'status' => 'deployment',
-                    'progres_total' => max($project->progres_total, 90),
-                ]);
+                $dynamicInput = [
+                    'fields' => $request->input('workflow_fields', []),
+                    'files' => $request->file('workflow_files', []),
+                ];
+
+                $nextWorkflow = $this->workflowService->advance(
+                    $project,
+                    auth()->user(),
+                    $validated['catatan_kerentanan'] ?: 'Audit Keamanan LULUS.',
+                    $dynamicInput
+                );
             } elseif ($validated['hasil'] === 'perbaikan') {
-                // Revision required -> Return to developers with vulnerabilities list
-                $project->update([
-                    'status' => 'in_development',
-                ]);
+                $this->workflowService->sendForRevision(
+                    $project,
+                    auth()->user(),
+                    $validated['catatan_kerentanan'] ?: 'Temuan kerentanan perlu mitigasi perbaikan.'
+                );
             } else {
-                // Failed -> Return to developers
-                $project->update([
-                    'status' => 'in_development',
-                ]);
+                $this->workflowService->sendForRevision(
+                    $project,
+                    auth()->user(),
+                    $validated['catatan_kerentanan'] ?: 'Audit keamanan tidak lulus.'
+                );
             }
 
             // Update pengajuan audit log
@@ -147,7 +163,9 @@ class PengujianController extends Controller
         });
 
         $msg = match ($validated['hasil']) {
-            'lulus' => "Audit Keamanan LULUS! Proyek '{$project->nama_project}' otomatis diteruskan ke tahap Deployment (Bidang Infrastruktur).",
+            'lulus' => $nextWorkflow
+                ? "Audit Keamanan LULUS! Proyek '{$project->nama_project}' otomatis diteruskan ke tahap {$nextWorkflow->workflow->nama}."
+                : "Audit Keamanan LULUS! Seluruh tahapan alur proyek '{$project->nama_project}' telah selesai (LIVE).",
             'perbaikan' => "Temuan kerentanan dicatat. Proyek '{$project->nama_project}' dikembalikan ke Tim Pengembang untuk mitigasi perbaikan.",
             default => "Hasil audit tidak lulus telah dicatat untuk proyek '{$project->nama_project}'.",
         };

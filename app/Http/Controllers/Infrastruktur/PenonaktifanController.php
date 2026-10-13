@@ -22,8 +22,14 @@ class PenonaktifanController extends Controller
             'aplikasi.projects.hostingAplikasi',
             'penilai',
             'dokumen.masterDokumen',
+            'layanan',
         ])
-            ->where('jenis_pengajuan', 'app_deactivation')
+            ->where(function ($q) {
+                $q->where('jenis_pengajuan', 'app_deactivation')
+                    ->orWhereHas('layanan', function ($lq) {
+                        $lq->where('slug', 'penonaktifan-aplikasi');
+                    });
+            })
             ->where('status', 'approved');
 
         if ($search = $request->input('search')) {
@@ -42,8 +48,14 @@ class PenonaktifanController extends Controller
         $decommissioned = Pengajuan::with([
             'aplikasi.instansi',
             'penilai',
+            'layanan',
         ])
-            ->where('jenis_pengajuan', 'app_deactivation')
+            ->where(function ($q) {
+                $q->where('jenis_pengajuan', 'app_deactivation')
+                    ->orWhereHas('layanan', function ($lq) {
+                        $lq->where('slug', 'penonaktifan-aplikasi');
+                    });
+            })
             ->where('status', 'approved')
             ->whereHas('aplikasi', function ($q) {
                 $q->where('status', 'nonaktif');
@@ -60,7 +72,10 @@ class PenonaktifanController extends Controller
      */
     public function execute(Request $request, Pengajuan $pengajuan): RedirectResponse
     {
-        if ($pengajuan->jenis_pengajuan !== 'app_deactivation' || $pengajuan->status !== 'approved') {
+        $isDeactivation = $pengajuan->jenis_pengajuan === 'app_deactivation'
+            || ($pengajuan->layanan && $pengajuan->layanan->slug === 'penonaktifan-aplikasi');
+
+        if (! $isDeactivation || $pengajuan->status !== 'approved') {
             return redirect()
                 ->route('infrastruktur.penonaktifan.index')
                 ->with('error', 'Pengajuan penonaktifan ini tidak valid untuk diproses.');
@@ -103,6 +118,21 @@ class PenonaktifanController extends Controller
                         ]);
                     }
                 }
+            }
+
+            // Selesaikan tahapan decommissioning di stepper workflow jika ada
+            $decommStep = $pengajuan->workflowData()
+                ->whereHas('layananWorkflow.workflow', function ($q) {
+                    $q->where('slug', 'decommissioning');
+                })->first();
+
+            if ($decommStep) {
+                $decommStep->update([
+                    'status' => 'completed',
+                    'completed_by' => auth()->id(),
+                    'completed_at' => now(),
+                    'catatan' => $validated['catatan'] ?? 'Server dan domain aplikasi telah dinonaktifkan.',
+                ]);
             }
 
             // Update pengajuan catatan

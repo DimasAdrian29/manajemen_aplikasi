@@ -172,6 +172,11 @@
             </div>
         </div>
 
+        @if($project->currentWorkflow)
+            <!-- Parameter & Checklist Khusus Tahapan Persandian / CSIRT -->
+            <x-workflow-step-fields :workflow="$project->currentWorkflow" />
+        @endif
+
         <!-- Submit Bar -->
         <div class="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="text-xs text-slate-500">

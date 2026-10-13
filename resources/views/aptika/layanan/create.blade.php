@@ -124,10 +124,18 @@
                     >
                 </div>
 
-                <div class="flex items-center h-full pt-6">
+                <div class="space-y-3 pt-4">
                     <label class="inline-flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="w-4 h-4 rounded text-[#0D47A1] focus:ring-[#0D47A1]">
                         <span class="text-xs font-semibold text-slate-700">Aktifkan Layanan Segera</span>
+                    </label>
+
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" name="memerlukan_aplikasi_eksisting" value="1" {{ old('memerlukan_aplikasi_eksisting') ? 'checked' : '' }} class="w-4 h-4 mt-0.5 rounded text-[#0D47A1] focus:ring-[#0D47A1]">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-700 block">Memerlukan Aplikasi Eksisting</span>
+                            <span class="text-[11px] text-slate-500 block">Centang jika usulan ini ditujukan untuk aplikasi yang telah ada (pemohon wajib memilih dari daftar aplikasi instansi).</span>
+                        </div>
                     </label>
                 </div>
             </div>

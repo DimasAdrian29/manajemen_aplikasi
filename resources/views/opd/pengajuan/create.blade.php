@@ -11,7 +11,7 @@
         <span class="material-symbols-outlined text-[#0D47A1] text-[28px] shrink-0 mt-0.5">verified_user</span>
         <div class="text-xs text-slate-700 leading-relaxed">
             <span class="font-bold text-[#0D47A1] block text-sm mb-1">Standarisasi & Regulasi Layanan SPBE Daerah</span>
-            Setiap usulan pembangunan maupun pengembangan aplikasi daerah dievaluasi oleh Bidang APTIKA, Bidang Persandian, dan Tim Tata Kelola TIK Diskominfo Provinsi Riau. Pastikan seluruh dokumen persyaratan resmi terunggah dengan format dan stempel/TTE yang sah.
+            Setiap usulan layanan difasilitasi oleh Dinas Kominfo Provinsi Riau dan diproses melalui alur workflow tahapan kerja resmi. Pastikan seluruh berkas persyaratan dan konfirmasi tahapan awal terisi dengan benar.
         </div>
     </div>
 
@@ -26,49 +26,151 @@
                     Langkah 1: Pilih Jenis Layanan Fasilitasi <span class="text-rose-500">*</span>
                 </label>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach ($layanans as $layananItem)
                         @php
                             $isSelected = ($selectedLayanan && $selectedLayanan->id === $layananItem->id);
-                            $isNewApp = str_contains($layananItem->slug, 'baru');
+                            $isNewApp = $layananItem->isAplikasiBaru();
                             $legacyType = $isNewApp ? 'new_app' : (str_contains($layananItem->slug, 'nonaktif') || str_contains($layananItem->slug, 'deactivation') ? 'app_deactivation' : 'app_development');
                         @endphp
-                        <label class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition select-none layanan-radio-card {{ $isSelected ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}"
+                        <div 
+                            class="layanan-card cursor-pointer p-4 rounded-xl border-2 transition select-none flex flex-col justify-between {{ $isSelected ? 'border-[#0D47A1] bg-blue-50/40 ring-2 ring-[#0D47A1]/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}"
                             data-layanan-id="{{ $layananItem->id }}"
+                            data-layanan-slug="{{ $layananItem->slug }}"
                             data-is-new="{{ $isNewApp ? '1' : '0' }}"
                             data-legacy-type="{{ $legacyType }}"
+                            onclick="selectLayanan({{ $layananItem->id }}, '{{ $layananItem->slug }}', {{ $isNewApp ? 'true' : 'false' }}, '{{ $legacyType }}')"
                         >
-                            <input type="radio" name="layanan_id" value="{{ $layananItem->id }}" class="sr-only" {{ $isSelected ? 'checked' : '' }} onchange="onLayananChange({{ $layananItem->id }}, '{{ $legacyType }}', {{ $isNewApp ? 'true' : 'false' }})">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: {{ $layananItem->warna }}18; color: {{ $layananItem->warna }};">
-                                    <span class="material-symbols-outlined text-[20px]">{{ $layananItem->ikon ?? 'category' }}</span>
+                            <div>
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <span class="w-9 h-9 rounded-lg flex items-center justify-center shadow-2xs" style="background-color: {{ $layananItem->warna }}18; color: {{ $layananItem->warna }};">
+                                        <span class="material-symbols-outlined text-[22px]">{{ $layananItem->ikon ?? 'category' }}</span>
+                                    </span>
+                                    <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white {{ $isSelected ? 'block' : 'hidden' }}"></span>
+                                    </span>
+                                </div>
+                                <div class="text-sm font-bold text-slate-900">{{ $layananItem->nama }}</div>
+                                <div class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{{ $layananItem->deskripsi }}</div>
+                            </div>
+
+                            <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                <span class="px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600">
+                                    {{ $layananItem->workflows->count() }} Tahapan Alur
                                 </span>
-                                <span class="radio-check w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center {{ $isSelected ? 'border-[#0D47A1] bg-[#0D47A1]' : '' }}">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-white {{ $isSelected ? 'block' : 'hidden' }}"></span>
+                                <span class="font-bold text-[#0D47A1] flex items-center gap-0.5">
+                                    <span>Pilih</span>
+                                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                                 </span>
                             </div>
-                            <div class="text-sm font-bold text-slate-900">{{ $layananItem->nama }}</div>
-                            <div class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{{ $layananItem->deskripsi }}</div>
-                        </label>
+                        </div>
                     @endforeach
                 </div>
+
+                <input type="hidden" name="layanan_id" id="layanan_id_input" value="{{ $selectedLayanan?->id }}">
                 <input type="hidden" name="jenis_pengajuan" id="jenis_pengajuan_input" value="{{ old('jenis_pengajuan', str_contains($selectedLayanan?->slug ?? '', 'baru') ? 'new_app' : (str_contains($selectedLayanan?->slug ?? '', 'nonaktif') ? 'app_deactivation' : 'app_development')) }}">
+                
                 @error('layanan_id')
-                    <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
+                    <p class="text-xs text-rose-600 mt-1.5 font-medium">{{ $message }}</p>
                 @enderror
             </div>
 
-            <!-- 2. Informasi Aplikasi -->
+            <!-- 2. Visualisasi Alur Workflow Tahapan Layanan yang Dipilih -->
+            <div class="pt-4 border-t border-slate-100 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">
+                        Langkah 2: Susunan Alur Workflow Layanan Terpilih
+                    </label>
+                    <span class="text-[11px] text-slate-400">Tahapan resmi yang akan dilalui usulan ini</span>
+                </div>
+
+                @foreach ($layanans as $layananItem)
+                    @php
+                        $isSelected = ($selectedLayanan && $selectedLayanan->id === $layananItem->id);
+                    @endphp
+                    <div 
+                        class="layanan-wf-timeline p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200/90 transition" 
+                        id="wf_timeline_{{ $layananItem->id }}"
+                        style="{{ $isSelected ? '' : 'display: none;' }}"
+                    >
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-blue-100 text-[#0D47A1] flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">account_tree</span>
+                                </span>
+                                <span class="text-xs font-bold text-slate-800">
+                                    Alur Workflow: <strong class="text-[#0D47A1]">{{ $layananItem->nama }}</strong>
+                                </span>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-[#0D47A1] border border-blue-200 self-start sm:self-auto">
+                                {{ $layananItem->workflows->count() }} Tahapan Tersusun
+                            </span>
+                        </div>
+
+                        @if ($layananItem->workflows->isNotEmpty())
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                @foreach ($layananItem->workflows as $lw)
+                                    <div class="p-3.5 rounded-xl border {{ $loop->first ? 'bg-white border-[#0D47A1] ring-2 ring-[#0D47A1]/10 shadow-xs' : 'bg-white/80 border-slate-200/80' }} transition flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-lg {{ $loop->first ? 'bg-[#0D47A1] text-white font-bold' : 'bg-slate-100 text-slate-500 font-semibold' }} flex items-center justify-center text-[11px]">
+                                                        {{ $lw->urutan }}
+                                                    </span>
+                                                    <span class="text-[10px] font-bold {{ $loop->first ? 'text-[#0D47A1]' : 'text-slate-400' }} uppercase tracking-wider">
+                                                        Tahap {{ $lw->urutan }}
+                                                    </span>
+                                                </div>
+                                                @if ($loop->first)
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        Saat Ini (Form)
+                                                    </span>
+                                                @else
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-medium text-slate-400 bg-slate-100">
+                                                        Tahap Lanjutan
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="text-xs font-bold text-slate-900 leading-snug">
+                                                {{ $lw->workflow->nama }}
+                                            </div>
+                                            @if ($lw->workflow->deskripsi)
+                                                <div class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                    {{ $lw->workflow->deskripsi }}
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        @if ($loop->first && $lw->workflow->fields->isNotEmpty())
+                                            <div class="mt-2.5 pt-2 border-t border-slate-100 text-[10px] font-medium text-[#0D47A1] flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-[13px]">checklist</span>
+                                                <span>{{ $lw->workflow->fields->count() }} Isian / Berkas Persyaratan</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/50 text-xs text-amber-800 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">warning</span>
+                                <span>Layanan ini belum memiliki tahapan alur workflow aktif.</span>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- 3. Informasi Aplikasi -->
             <div class="pt-4 border-t border-slate-100 space-y-4">
                 <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Langkah 2: Data Sistem & Kebutuhan
+                    Langkah 3: Data Sistem & Kebutuhan
                 </div>
 
                 @php
                     $isInitiallyNew = str_contains($selectedLayanan?->slug ?? '', 'baru') || old('jenis_pengajuan') === 'new_app';
                 @endphp
 
-                <!-- Input Nama Aplikasi (Jika layanan sistem baru) -->
+                <!-- Input Nama Usulan Aplikasi (Jika layanan sistem baru atau belum terdaftar) -->
                 <div id="fieldNamaAplikasi" class="{{ $isInitiallyNew ? 'block' : 'hidden' }}">
                     <label for="nama_aplikasi" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         Nama Usulan Aplikasi <span class="text-rose-500">*</span>
@@ -117,7 +219,7 @@
                         name="deskripsi_kebutuhan" 
                         id="deskripsi_kebutuhan" 
                         rows="4" 
-                        placeholder="Jelaskan proses bisnis, tujuan sistem, target pengguna, dan justifikasi usulan secara rinci..." 
+                        placeholder="Jelaskan proses bisnis, tujuan sistem, target pengguna, dan latar belakang usulan secara rinci..." 
                         class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('deskripsi_kebutuhan') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
                         required
                     >{{ old('deskripsi_kebutuhan') }}</textarea>
@@ -127,10 +229,10 @@
                 </div>
             </div>
 
-            <!-- 3. Narahubung Pemohon -->
+            <!-- 4. Narahubung Pemohon -->
             <div class="pt-4 border-t border-slate-100 space-y-4">
                 <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Langkah 3: Narahubung & Pejabat Pemohon
+                    Langkah 4: Narahubung & Pejabat Pemohon
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -173,15 +275,15 @@
                 </div>
             </div>
 
-            <!-- 4. Unggah Berkas Dokumen Dinamis Sesuai Alur Workflow -->
+            <!-- 5. Berkas Persyaratan & Field Dinamis Tahap 1 Workflow Sesuai Layanan -->
             <div class="pt-4 border-t border-slate-100 space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                            Langkah 4: Lampiran Dokumen Persyaratan
+                            Langkah 5: Berkas Persyaratan & Checklist Tahap 1
                         </div>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Slot unggahan berkas disesuaikan dengan regulasi layanan SPBE yang Anda pilih.
+                            Formulir dan berkas yang dipersyaratkan pada tahapan awal alur layanan yang Anda pilih.
                         </p>
                     </div>
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -190,131 +292,155 @@
                     </span>
                 </div>
 
-                @php
-                    $initLegacyType = $isInitiallyNew ? 'new_app' : (str_contains($selectedLayanan?->slug ?? '', 'nonaktif') ? 'app_deactivation' : 'app_development');
-                @endphp
-
-                <div class="space-y-4" id="dokumenContainer">
-                    @foreach ($masterDokumens as $doc)
-                        @php
-                            $isRelevant = ($doc->berlaku_untuk === 'semua' || $doc->berlaku_untuk === $initLegacyType);
-                        @endphp
-                        <div 
-                            class="doc-slot p-5 rounded-xl border border-slate-200/90 bg-slate-50/40 space-y-3 transition" 
-                            data-berlaku="{{ $doc->berlaku_untuk }}"
-                            data-wajib="{{ $doc->wajib ? '1' : '0' }}"
-                            data-doc-id="{{ $doc->id }}"
-                            style="{{ $isRelevant ? '' : 'display: none;' }}"
-                        >
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                @foreach ($layanans as $layananItem)
+                    @php
+                        $isSelected = ($selectedLayanan && $selectedLayanan->id === $layananItem->id);
+                        $firstLw = $layananItem->workflows->first();
+                        $firstWf = $firstLw?->workflow;
+                    @endphp
+                    <div 
+                        class="layanan-step1-pane space-y-4 transition" 
+                        id="step1_pane_{{ $layananItem->id }}"
+                        style="{{ $isSelected ? '' : 'display: none;' }}"
+                    >
+                        @if ($firstWf)
+                            <div class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 flex items-center justify-between text-xs">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-7 h-7 rounded-lg bg-blue-100 text-[#0D47A1] flex items-center justify-center font-bold text-xs">
-                                        {{ $loop->iteration }}
-                                    </span>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                            <span>{{ $doc->nama_dokumen }}</span>
-                                            @if ($doc->wajib)
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                                    Wajib
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                                    Opsional
-                                                </span>
-                                            @endif
-                                        </h4>
-                                    </div>
+                                    <span class="material-symbols-outlined text-[18px] text-[#0D47A1]">fact_check</span>
+                                    <span>Persyaratan Tahap 1: <strong>{{ $firstWf->nama }}</strong></span>
                                 </div>
-
-                                @if ($doc->file_template)
-                                    <a href="{{ asset('storage/' . $doc->file_template) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shrink-0">
-                                        <span class="material-symbols-outlined text-[15px]">file_download</span>
-                                        <span>Unduh Format Blangko</span>
-                                    </a>
-                                @endif
+                                <span class="text-[11px] text-[#0D47A1] font-semibold">
+                                    Layanan {{ $layananItem->nama }}
+                                </span>
                             </div>
 
-                            @if ($doc->deskripsi)
-                                <p class="text-xs text-slate-600 bg-white/70 p-2.5 rounded-lg border border-slate-200/60 leading-relaxed">
-                                    {{ $doc->deskripsi }}
-                                </p>
-                            @endif
+                            @if ($firstWf->fields->isNotEmpty())
+                                <div class="space-y-4">
+                                    @foreach ($firstWf->fields as $field)
+                                        @if ($field->tipe === 'file_upload')
+                                            @php
+                                                $masterDoc = $field->masterDokumen;
+                                                $inputName = $masterDoc ? "dokumen[{$masterDoc->id}]" : "workflow_files[{$field->id}]";
+                                                $inputId = "file_field_{$layananItem->id}_{$field->id}";
+                                                $format = $masterDoc ? $masterDoc->format_diizinkan : 'pdf,doc,docx';
+                                                $maxKb = $masterDoc ? $masterDoc->max_size_kb : 10240;
+                                            @endphp
+                                            <div class="p-5 rounded-xl border border-slate-200/90 bg-slate-50/40 space-y-3">
+                                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-[#0D47A1] flex items-center justify-center font-bold text-xs shrink-0">
+                                                            <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                                                        </span>
+                                                        <div>
+                                                            <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                                <span>{{ $field->label }}</span>
+                                                                @if ($field->wajib)
+                                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Wajib</span>
+                                                                @else
+                                                                    <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">Opsional</span>
+                                                                @endif
+                                                            </h4>
+                                                        </div>
+                                                    </div>
 
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                                <input 
-                                    type="file" 
-                                    name="dokumen[{{ $doc->id }}]" 
-                                    id="dokumen_{{ $doc->id }}"
-                                    accept="{{ '.' . str_replace([' ', ','], ',.', $doc->format_diizinkan) }}"
-                                    class="doc-file-input block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#0D47A1] file:text-white hover:file:bg-[#1565C0] cursor-pointer border border-slate-200 rounded-xl bg-white p-2"
-                                    {{ ($doc->wajib && $isRelevant) ? 'required' : '' }}
-                                    {{ $isRelevant ? '' : 'disabled' }}
-                                >
-                                <div class="text-[11px] text-slate-400 shrink-0">
-                                    Format: <strong class="text-slate-600 uppercase">{{ $doc->format_diizinkan }}</strong> (Maks. {{ number_format($doc->max_size_kb / 1024, 1) }} MB)
-                                </div>
-                            </div>
-                            @error("dokumen.{$doc->id}")
-                                <p class="text-xs text-rose-600 font-medium">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+                                                    @if ($masterDoc && $masterDoc->file_template)
+                                                        <a href="{{ asset('storage/' . $masterDoc->file_template) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shrink-0">
+                                                            <span class="material-symbols-outlined text-[15px]">file_download</span>
+                                                            <span>Unduh Format Blangko</span>
+                                                        </a>
+                                                    @endif
+                                                </div>
 
-            <!-- 5. Field Checklist & Pernyataan Kepatuhan Workflow -->
-            @if ($firstStepWorkflow && $firstStepWorkflow->fields->isNotEmpty())
-                @php
-                    $nonDocFields = $firstStepWorkflow->fields->where('tipe', '!=', 'file_upload');
-                @endphp
-                @if ($nonDocFields->isNotEmpty())
-                    <div class="pt-4 border-t border-slate-100 space-y-4">
-                        <div>
-                            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                                Langkah 5: Checklist & Konfirmasi Kesiapan SPBE
-                            </div>
-                            <p class="text-xs text-slate-500 mt-0.5">
-                                Persyaratan verifikasi pada tahapan: <strong>{{ $firstStepWorkflow->nama }}</strong>
-                            </p>
-                        </div>
-
-                        <div class="space-y-3">
-                            @foreach ($nonDocFields as $wfField)
-                                @if ($wfField->tipe === 'checklist')
-                                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-blue-50/30 transition">
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox" name="fields[{{ $wfField->id }}]" value="1" {{ old('fields.' . $wfField->id) ? 'checked' : '' }} {{ $wfField->wajib ? 'required' : '' }} class="mt-0.5 w-4 h-4 rounded text-[#0D47A1] focus:ring-[#0D47A1]">
-                                            <div class="text-xs">
-                                                <span class="font-bold text-slate-800">{{ $wfField->label }}</span>
-                                                @if ($wfField->wajib)
-                                                    <span class="text-rose-500 font-bold">*</span>
+                                                @if ($field->keterangan || ($masterDoc && $masterDoc->deskripsi))
+                                                    <p class="text-xs text-slate-600 bg-white/70 p-2.5 rounded-lg border border-slate-200/60 leading-relaxed">
+                                                        {{ $field->keterangan ?? $masterDoc->deskripsi }}
+                                                    </p>
                                                 @endif
-                                                @if ($wfField->keterangan)
-                                                    <p class="text-slate-500 mt-0.5 leading-relaxed">{{ $wfField->keterangan }}</p>
-                                                @endif
+
+                                                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                    <input 
+                                                        type="file" 
+                                                        name="{{ $inputName }}" 
+                                                        id="{{ $inputId }}"
+                                                        data-wajib="{{ $field->wajib ? '1' : '0' }}"
+                                                        accept="{{ '.' . str_replace([' ', ','], ',.', $format) }}"
+                                                        class="step1-input block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#0D47A1] file:text-white hover:file:bg-[#1565C0] cursor-pointer border border-slate-200 rounded-xl bg-white p-2"
+                                                        {{ ($isSelected && $field->wajib) ? 'required' : '' }}
+                                                        {{ $isSelected ? '' : 'disabled' }}
+                                                    >
+                                                    <div class="text-[11px] text-slate-400 shrink-0">
+                                                        Format: <strong class="text-slate-600 uppercase">{{ $format }}</strong> (Maks. {{ number_format($maxKb / 1024, 1) }} MB)
+                                                    </div>
+                                                </div>
+                                                @error($masterDoc ? "dokumen.{$masterDoc->id}" : "workflow_files.{$field->id}")
+                                                    <p class="text-xs text-rose-600 font-medium">{{ $message }}</p>
+                                                @enderror
                                             </div>
-                                        </label>
-                                        @error('fields.' . $wfField->id)
-                                            <p class="text-xs text-rose-600 mt-1 pl-7">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                @elseif ($wfField->tipe === 'text')
+                                        @elseif ($field->tipe === 'checklist')
+                                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-blue-50/30 transition">
+                                                <label class="flex items-start gap-3 cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="fields[{{ $field->id }}]" 
+                                                        value="1" 
+                                                        data-wajib="{{ $field->wajib ? '1' : '0' }}"
+                                                        class="step1-input mt-0.5 w-4 h-4 rounded text-[#0D47A1] focus:ring-[#0D47A1]"
+                                                        {{ ($isSelected && $field->wajib) ? 'required' : '' }}
+                                                        {{ $isSelected ? '' : 'disabled' }}
+                                                        {{ old('fields.' . $field->id) ? 'checked' : '' }}
+                                                    >
+                                                    <div class="text-xs">
+                                                        <span class="font-bold text-slate-800">{{ $field->label }}</span>
+                                                        @if ($field->wajib)
+                                                            <span class="text-rose-500 font-bold">*</span>
+                                                        @endif
+                                                        @if ($field->keterangan)
+                                                            <p class="text-slate-500 mt-0.5 leading-relaxed">{{ $field->keterangan }}</p>
+                                                        @endif
+                                                    </div>
+                                                </label>
+                                                @error('fields.' . $field->id)
+                                                    <p class="text-xs text-rose-600 mt-1 pl-7">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @elseif ($field->tipe === 'text')
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                                    {{ $field->label }} @if ($field->wajib) <span class="text-rose-500">*</span> @endif
+                                                </label>
+                                                <textarea 
+                                                    name="fields[{{ $field->id }}]" 
+                                                    rows="2" 
+                                                    data-wajib="{{ $field->wajib ? '1' : '0' }}"
+                                                    placeholder="{{ $field->keterangan ?? 'Masukkan isian...' }}" 
+                                                    class="step1-input w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
+                                                    {{ ($isSelected && $field->wajib) ? 'required' : '' }}
+                                                    {{ $isSelected ? '' : 'disabled' }}
+                                                >{{ old('fields.' . $field->id) }}</textarea>
+                                                @error('fields.' . $field->id)
+                                                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="p-5 rounded-xl border border-blue-200 bg-blue-50/40 text-xs text-slate-600 flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-[22px] text-[#0D47A1]">check_circle</span>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                                            {{ $wfField->label }} @if ($wfField->wajib) <span class="text-rose-500">*</span> @endif
-                                        </label>
-                                        <textarea name="fields[{{ $wfField->id }}]" rows="2" {{ $wfField->wajib ? 'required' : '' }} placeholder="{{ $wfField->keterangan ?? 'Masukkan isian...' }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]">{{ old('fields.' . $wfField->id) }}</textarea>
-                                        @error('fields.' . $wfField->id)
-                                            <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                                        @enderror
+                                        <span class="font-bold text-slate-800 block">Tidak Memerlukan Berkas Persyaratan Khusus</span>
+                                        Tahapan awal (<strong>{{ $firstWf->nama }}</strong>) pada layanan ini siap diajukan secara langsung tanpa lampiran berkas khusus tambahan.
                                     </div>
-                                @endif
-                            @endforeach
-                        </div>
+                                </div>
+                            @endif
+                        @else
+                            <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/50 text-xs text-amber-800">
+                                Layanan ini belum memiliki alur tahapan workflow aktif.
+                            </div>
+                        @endif
                     </div>
-                @endif
-            @endif
+                @endforeach
+            </div>
 
             <!-- Submit Button Bar -->
             <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
@@ -331,83 +457,98 @@
 </div>
 
 <script>
-    function onLayananChange(layananId, legacyType, isNewApp) {
-        // 1. Update radio styling
-        document.querySelectorAll('.layanan-radio-card').forEach(card => {
+    function selectLayanan(layananId, layananSlug, isNewApp, legacyType) {
+        // 1. Highlight selected card
+        document.querySelectorAll('.layanan-card').forEach(card => {
             const id = card.getAttribute('data-layanan-id');
-            const checkIcon = card.querySelector('.radio-check');
-            const dot = checkIcon.querySelector('span');
+            const checkRadio = card.querySelector('.radio-check');
+            const dot = checkRadio ? checkRadio.querySelector('span') : null;
 
             if (id == layananId) {
                 card.classList.add('border-[#0D47A1]', 'bg-blue-50/40', 'ring-2', 'ring-[#0D47A1]/10');
                 card.classList.remove('border-slate-200', 'bg-white');
-                checkIcon.classList.add('border-[#0D47A1]', 'bg-[#0D47A1]');
-                checkIcon.classList.remove('border-slate-300');
-                dot.classList.remove('hidden');
+                if (checkRadio) {
+                    checkRadio.classList.add('border-[#0D47A1]', 'bg-[#0D47A1]');
+                    checkRadio.classList.remove('border-slate-300');
+                }
+                if (dot) dot.classList.remove('hidden');
             } else {
                 card.classList.remove('border-[#0D47A1]', 'bg-blue-50/40', 'ring-2', 'ring-[#0D47A1]/10');
                 card.classList.add('border-slate-200', 'bg-white');
-                checkIcon.classList.remove('border-[#0D47A1]', 'bg-[#0D47A1]');
-                checkIcon.classList.add('border-slate-300');
-                dot.classList.add('hidden');
+                if (checkRadio) {
+                    checkRadio.classList.remove('border-[#0D47A1]', 'bg-[#0D47A1]');
+                    checkRadio.classList.add('border-slate-300');
+                }
+                if (dot) dot.classList.add('hidden');
             }
         });
 
-        // 2. Set hidden jenis_pengajuan input
-        document.getElementById('jenis_pengajuan_input').value = legacyType;
+        // 2. Set hidden inputs
+        const hiddenLayanan = document.getElementById('layanan_id_input');
+        if (hiddenLayanan) hiddenLayanan.value = layananId;
+        const hiddenJenis = document.getElementById('jenis_pengajuan_input');
+        if (hiddenJenis) hiddenJenis.value = legacyType;
 
-        // 3. Toggle App Name vs Select Existing App
+        // 3. Toggle Workflow Stepper Preview
+        document.querySelectorAll('.layanan-wf-timeline').forEach(el => {
+            el.style.display = (el.id === 'wf_timeline_' + layananId) ? '' : 'none';
+        });
+
+        // 4. Toggle Step 1 Fields & manage disabled/required
+        document.querySelectorAll('.layanan-step1-pane').forEach(pane => {
+            const isActive = (pane.id === 'step1_pane_' + layananId);
+            pane.style.display = isActive ? '' : 'none';
+
+            pane.querySelectorAll('.step1-input').forEach(input => {
+                if (isActive) {
+                    input.removeAttribute('disabled');
+                    if (input.getAttribute('data-wajib') === '1') {
+                        input.setAttribute('required', 'required');
+                    } else {
+                        input.removeAttribute('required');
+                    }
+                } else {
+                    input.setAttribute('disabled', 'disabled');
+                    input.removeAttribute('required');
+                }
+            });
+        });
+
+        // 5. Toggle App Name vs Select Existing App
         const fieldNama = document.getElementById('fieldNamaAplikasi');
         const inputNama = document.getElementById('nama_aplikasi');
         const fieldPilih = document.getElementById('fieldPilihAplikasi');
         const selectApp = document.getElementById('aplikasi_id');
 
         if (isNewApp) {
-            fieldNama.classList.remove('hidden');
-            inputNama.setAttribute('required', 'required');
-            fieldPilih.classList.add('hidden');
-            selectApp.removeAttribute('required');
+            if (fieldNama) fieldNama.classList.remove('hidden');
+            if (inputNama) inputNama.setAttribute('required', 'required');
+            if (fieldPilih) fieldPilih.classList.add('hidden');
+            if (selectApp) selectApp.removeAttribute('required');
         } else {
-            fieldNama.classList.add('hidden');
-            inputNama.removeAttribute('required');
-            fieldPilih.classList.remove('hidden');
-            selectApp.setAttribute('required', 'required');
+            if (fieldNama) fieldNama.classList.add('hidden');
+            if (inputNama) inputNama.removeAttribute('required');
+            if (fieldPilih) fieldPilih.classList.remove('hidden');
+            if (selectApp) selectApp.setAttribute('required', 'required');
         }
 
-        // 4. Filter Dynamic Document Slots
-        document.querySelectorAll('.doc-slot').forEach(slot => {
-            const berlaku = slot.getAttribute('data-berlaku');
-            const isWajib = slot.getAttribute('data-wajib') === '1';
-            const fileInput = slot.querySelector('.doc-file-input');
-
-            const isMatch = (berlaku === 'semua' || berlaku === legacyType);
-
-            if (isMatch) {
-                slot.style.display = '';
-                fileInput.removeAttribute('disabled');
-                if (isWajib) {
-                    fileInput.setAttribute('required', 'required');
-                } else {
-                    fileInput.removeAttribute('required');
-                }
-            } else {
-                slot.style.display = 'none';
-                fileInput.setAttribute('disabled', 'disabled');
-                fileInput.removeAttribute('required');
-                fileInput.value = '';
-            }
-        });
+        // 6. Push URL query param for easy sharing/refreshing
+        if (window.history && window.history.replaceState) {
+            const url = new URL(window.location);
+            url.searchParams.set('layanan', layananSlug);
+            window.history.replaceState(null, '', url);
+        }
     }
 
     // Inisialisasi awal saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
-        const checkedCard = document.querySelector('.layanan-radio-card input[name="layanan_id"]:checked');
-        if (checkedCard) {
-            const parent = checkedCard.closest('.layanan-radio-card');
-            const id = parent.getAttribute('data-layanan-id');
-            const legacyType = parent.getAttribute('data-legacy-type');
-            const isNewApp = parent.getAttribute('data-is-new') === '1';
-            onLayananChange(id, legacyType, isNewApp);
+        const activeLayananId = document.getElementById('layanan_id_input').value;
+        const activeCard = document.querySelector(`.layanan-card[data-layanan-id="${activeLayananId}"]`);
+        if (activeCard) {
+            const slug = activeCard.getAttribute('data-layanan-slug');
+            const isNew = activeCard.getAttribute('data-is-new') === '1';
+            const legacyType = activeCard.getAttribute('data-legacy-type');
+            selectLayanan(activeLayananId, slug, isNew, legacyType);
         }
     });
 </script>

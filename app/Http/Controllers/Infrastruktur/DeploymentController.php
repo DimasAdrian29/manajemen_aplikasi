@@ -7,6 +7,7 @@ use App\Http\Requests\Infrastruktur\HostingRequest;
 use App\Models\HostingAplikasi;
 use App\Models\Project;
 use App\Notifications\AplikasiLiveNotification;
+use App\Services\Workflow\WorkflowTransitionService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,6 +47,10 @@ class DeploymentController extends Controller
         return view('infrastruktur.deployment.index', compact('projects'));
     }
 
+    public function __construct(
+        protected WorkflowTransitionService $workflowService
+    ) {}
+
     /**
      * Show deployment form for a project.
      */
@@ -64,6 +69,7 @@ class DeploymentController extends Controller
             'testingAplikasi',
             'pengujianKeamanan',
             'hostingAplikasi',
+            'currentWorkflow.workflow.fields',
         ]);
 
         return view('infrastruktur.deployment.create', compact('project'));
@@ -82,7 +88,7 @@ class DeploymentController extends Controller
 
         $validated = $request->validated();
 
-        $hosting = DB::transaction(function () use ($project, $validated) {
+        $hosting = DB::transaction(function () use ($project, $validated, $request) {
             /** @var HostingAplikasi $hosting */
             $hosting = HostingAplikasi::updateOrCreate(
                 ['project_id' => $project->id],
@@ -93,16 +99,22 @@ class DeploymentController extends Controller
                 ])
             );
 
-            // Update Project to LIVE
-            $project->update([
-                'status' => 'live',
-                'progres_total' => 100,
-            ]);
+            // Alur transisi dinamis proyek melalui WorkflowTransitionService
+            $dynamicInput = [
+                'fields' => $request->input('workflow_fields', []),
+                'files' => $request->file('workflow_files', []),
+            ];
 
-            // Update Aplikasi to Aktif and sync URL
+            $this->workflowService->advance(
+                $project,
+                auth()->user(),
+                '[Infrastruktur '.now()->format('d/m/Y H:i').'] Server & domain hosting berhasil dikonfigurasi.',
+                $dynamicInput
+            );
+
+            // Update URL Aplikasi
             if ($project->aplikasi) {
                 $project->aplikasi->update([
-                    'status' => 'aktif',
                     'url_aplikasi' => $hosting->url_aplikasi,
                 ]);
             }

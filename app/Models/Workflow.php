@@ -36,4 +36,18 @@ class Workflow extends Model
             ->withPivot(['id', 'urutan', 'is_active'])
             ->withTimestamps();
     }
+
+    public function getTargetProjectStatusAttribute(): string
+    {
+        return match ($this->slug) {
+            'pengajuan-berkas' => 'initiated',
+            'telaah-kelayakan' => 'initiated',
+            'in_development' => 'in_development',
+            'functional_testing' => 'functional_testing',
+            'security_testing' => 'security_testing',
+            'deployment' => 'deployment',
+            'decommissioning' => 'decommissioning',
+            default => 'in_development',
+        };
+    }
 }

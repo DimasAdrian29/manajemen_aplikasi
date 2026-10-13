@@ -27,6 +27,7 @@ class LayananRequest extends FormRequest
             'ikon' => ['nullable', 'string', 'max:50'],
             'warna' => ['nullable', 'string', 'max:20'],
             'is_active' => ['nullable', 'boolean'],
+            'memerlukan_aplikasi_eksisting' => ['nullable', 'boolean'],
             'urutan' => ['nullable', 'integer', 'min:1'],
         ];
     }

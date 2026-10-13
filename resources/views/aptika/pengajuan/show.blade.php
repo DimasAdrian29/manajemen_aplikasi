@@ -259,6 +259,19 @@
                 @enderror
             </div>
 
+            @php
+                $telaahWorkflowItem = $pengajuan->layanan?->workflows()
+                    ->whereHas('workflow', fn($q) => $q->where('slug', 'telaah-kelayakan'))
+                    ->first();
+                $telaahWorkflowData = $telaahWorkflowItem ? $pengajuan->workflowData->where('layanan_workflow_id', $telaahWorkflowItem->id)->first() : null;
+            @endphp
+
+            @if($telaahWorkflowItem && $telaahWorkflowItem->workflow->fields->isNotEmpty())
+                <div class="pt-1">
+                    <x-workflow-step-fields :workflow="$telaahWorkflowItem" :workflowData="$telaahWorkflowData" />
+                </div>
+            @endif
+
             <!-- Evaluator Information if already evaluated -->
             @if ($pengajuan->penilai)
                 <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between">

@@ -78,6 +78,7 @@ class LayananWorkflowSeeder extends Seeder
                 'deskripsi' => 'Ajukan usulan pengembangan sistem informasi atau aplikasi baru untuk menunjang tugas pokok fungsi instansi Anda.',
                 'ikon' => 'add_to_photos',
                 'warna' => '#10B981',
+                'memerlukan_aplikasi_eksisting' => false,
                 'is_active' => true,
                 'urutan' => 1,
                 'workflows' => [
@@ -95,6 +96,7 @@ class LayananWorkflowSeeder extends Seeder
                 'deskripsi' => 'Permintaan pembaruan modul, integrasi interoperabilitas antar-layanan, atau perbaikan alur pada aplikasi yang sudah ada.',
                 'ikon' => 'published_with_changes',
                 'warna' => '#0D47A1',
+                'memerlukan_aplikasi_eksisting' => true,
                 'is_active' => true,
                 'urutan' => 2,
                 'workflows' => [
@@ -112,6 +114,7 @@ class LayananWorkflowSeeder extends Seeder
                 'deskripsi' => 'Pengajuan penghentian operasional, pencabutan domain sub-pemprov, atau migrasi data ke aplikasi terpadu nasional/provinsi.',
                 'ikon' => 'power_settings_new',
                 'warna' => '#F59E0B',
+                'memerlukan_aplikasi_eksisting' => true,
                 'is_active' => true,
                 'urutan' => 3,
                 'workflows' => [
@@ -128,6 +131,7 @@ class LayananWorkflowSeeder extends Seeder
             unset($layananData['workflows']);
 
             $layanan = Layanan::firstOrCreate(['slug' => $layananData['slug']], $layananData);
+            $layanan->update($layananData);
             $createdLayanans[$layanan->slug] = $layanan;
 
             // Hubungkan Layanan dengan Workflow sesuai urutan prioritas

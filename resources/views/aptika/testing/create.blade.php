@@ -31,12 +31,13 @@
                 <select 
                     name="project_id" 
                     id="project_id" 
+                    onchange="if(this.value) window.location.href='{{ route('aptika.testing.create') }}?project_id=' + this.value"
                     class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('project_id') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
                     required
                 >
                     <option value="">-- Pilih Proyek yang Diuji --</option>
                     @foreach ($projects as $proj)
-                        <option value="{{ $proj->id }}" {{ old('project_id', request('project_id')) == $proj->id ? 'selected' : '' }}>
+                        <option value="{{ $proj->id }}" {{ (old('project_id', $selectedProject?->id ?? request('project_id')) == $proj->id) ? 'selected' : '' }}>
                             {{ $proj->nama_project }} ({{ $proj->aplikasi->instansi->nama_instansi ?? '-' }}) - Status: {{ str_replace('_', ' ', $proj->status) }}
                         </option>
                     @endforeach
@@ -144,6 +145,13 @@
                     <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
                 @enderror
             </div>
+
+            @if($selectedProject && $selectedProject->currentWorkflow)
+                <!-- 6. Parameter Dinamis Master Workflow -->
+                <div>
+                    <x-workflow-step-fields :workflow="$selectedProject->currentWorkflow" />
+                </div>
+            @endif
 
             <!-- Submit Group -->
             <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">

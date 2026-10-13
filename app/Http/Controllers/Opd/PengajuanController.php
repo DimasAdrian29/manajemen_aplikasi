@@ -73,7 +73,9 @@ class PengajuanController extends Controller
             ->get();
 
         $selectedLayanan = null;
-        if ($request->filled('layanan')) {
+        if (old('layanan_id')) {
+            $selectedLayanan = $layanans->firstWhere('id', old('layanan_id'));
+        } elseif ($request->filled('layanan')) {
             $selectedLayanan = $layanans->firstWhere('slug', $request->query('layanan'))
                 ?? $layanans->firstWhere('id', $request->query('layanan'));
         } elseif ($request->filled('jenis')) {
@@ -207,6 +209,37 @@ class PengajuanController extends Controller
                     $legacyProposal = $path;
                 } elseif ($masterDoc->kode_dokumen === 'surat_pengantar') {
                     $legacySurat = $path;
+                }
+            }
+
+            // 4b. Simpan File Upload Standalone dari Workflow Field
+            $workflowFiles = $request->file('workflow_files', []);
+            if ($firstStepData && ! empty($workflowFiles)) {
+                foreach ($workflowFiles as $fieldId => $file) {
+                    if (! $file) {
+                        continue;
+                    }
+                    $wfField = $firstStepData->layananWorkflow->workflow->fields->find($fieldId);
+                    if (! $wfField) {
+                        continue;
+                    }
+
+                    $folderPath = "pengajuan/{$kodePengajuan}/workflow_fields";
+                    $cleanOriginalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $cleanSlug = Str::slug($cleanOriginalName);
+                    $extension = $file->getClientOriginalExtension();
+                    $fileName = time().'_'.$cleanSlug.'.'.$extension;
+
+                    $path = $file->storeAs($folderPath, $fileName, 'public');
+
+                    PengajuanFieldData::create([
+                        'pengajuan_workflow_data_id' => $firstStepData->id,
+                        'workflow_field_id' => $wfField->id,
+                        'file_path' => $path,
+                        'nama_file_asli' => $file->getClientOriginalName(),
+                        'ukuran_file' => $file->getSize(),
+                        'value' => $path,
+                    ]);
                 }
             }
 

@@ -106,8 +106,17 @@ class ProjectController extends Controller
 
             $devWorkflow = $pengajuan->layanan?->workflows()
                 ->whereHas('workflow', function ($q) {
-                    $q->where('slug', 'in_development');
+                    $q->whereIn('slug', ['in_development', 'pengerjaan', 'pelaksanaan']);
                 })->first();
+
+            if (! $devWorkflow) {
+                // Ambil workflow aktif pertama setelah telaah (urutan > 2), atau workflow pertama
+                $devWorkflow = $pengajuan->layanan?->workflows()
+                    ->where('is_active', true)
+                    ->where('urutan', '>', 2)
+                    ->orderBy('urutan')
+                    ->first() ?? $pengajuan->layanan?->workflows()->orderBy('urutan')->first();
+            }
 
             // Buat Project
             $project = Project::create([
@@ -120,6 +129,12 @@ class ProjectController extends Controller
                 'current_workflow_id' => $devWorkflow?->id,
                 'progres_total' => 0,
             ]);
+
+            if ($devWorkflow) {
+                $pengajuan->workflowData()
+                    ->where('layanan_workflow_id', $devWorkflow->id)
+                    ->update(['status' => 'in_progress']);
+            }
 
             // Assign Ketua Tim
             TimProject::create([
@@ -211,7 +226,9 @@ class ProjectController extends Controller
         // Cari layanan workflow yang cocok dengan status (slug)
         $layananWorkflow = $project->pengajuan?->layanan?->workflows()
             ->whereHas('workflow', function ($q) use ($newStatus) {
-                $q->where('slug', $newStatus);
+                $q->where('slug', $newStatus)
+                    ->orWhere('slug', str_replace('_', '-', $newStatus))
+                    ->orWhere('slug', str_replace('-', '_', $newStatus));
             })->first();
 
         if ($layananWorkflow) {
