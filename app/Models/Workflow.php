@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Permission\Models\Role;
 
 class Workflow extends Model
 {
@@ -18,7 +20,13 @@ class Workflow extends Model
         'slug',
         'deskripsi',
         'ikon',
+        'role_id',
     ];
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 
     public function fields(): HasMany
     {
@@ -47,7 +55,12 @@ class Workflow extends Model
             'security_testing' => 'security_testing',
             'deployment' => 'deployment',
             'decommissioning' => 'decommissioning',
-            default => 'in_development',
+            default => match ($this->role?->name) {
+                'admin_persandian' => 'security_testing',
+                'admin_infrastruktur' => 'deployment',
+                'admin_aptika' => 'functional_testing',
+                default => 'in_development',
+            },
         };
     }
 }

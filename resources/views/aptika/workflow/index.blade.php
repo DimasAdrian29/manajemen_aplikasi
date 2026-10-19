@@ -58,6 +58,7 @@
                     <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <th class="py-3.5 px-6">Tahapan Workflow</th>
                         <th class="py-3.5 px-6">Slug Kode</th>
+                        <th class="py-3.5 px-6 text-center">Peran Pelaksana</th>
                         <th class="py-3.5 px-6 text-center">Kelengkapan Field</th>
                         <th class="py-3.5 px-6 text-center">Digunakan Oleh</th>
                         <th class="py-3.5 px-6 text-right">Aksi</th>
@@ -83,6 +84,18 @@
                             </td>
                             <td class="py-4 px-6 font-mono text-xs text-slate-500">
                                 {{ $wf->slug }}
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                @if ($wf->role)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="material-symbols-outlined text-[13px]">badge</span>
+                                        <span>{{ ucwords(str_replace('_', ' ', $wf->role->name)) }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] text-slate-400 bg-slate-50 italic">
+                                        Umum / Fleksibel
+                                    </span>
+                                @endif
                             </td>
                             <td class="py-4 px-6 text-center">
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
@@ -123,7 +136,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-12 text-center text-slate-400">
+                            <td colspan="6" class="py-12 text-center text-slate-400">
                                 <span class="material-symbols-outlined text-[36px] text-slate-300 block mb-2">account_tree</span>
                                 <p class="text-sm font-semibold">Belum ada data master workflow.</p>
                             </td>

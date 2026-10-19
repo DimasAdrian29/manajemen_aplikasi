@@ -76,6 +76,11 @@
                     <span>Dashboard</span>
                 </a>
 
+                <a href="{{ route('workflow.task.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('workflow.task.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
+                    <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                    <span>Tugas Alur Kerja</span>
+                </a>
+
                 @php
                     $isMasterUserActive = request()->routeIs('superadmin.user.*', 'superadmin.role.*', 'superadmin.permission.*');
                 @endphp

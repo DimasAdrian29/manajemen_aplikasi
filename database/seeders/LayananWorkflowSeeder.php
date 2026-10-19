@@ -11,6 +11,7 @@ use App\Models\PengajuanWorkflowData;
 use App\Models\Workflow;
 use App\Models\WorkflowField;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class LayananWorkflowSeeder extends Seeder
 {
@@ -65,9 +66,22 @@ class LayananWorkflowSeeder extends Seeder
             ],
         ];
 
+        $roleMap = [
+            'pengajuan-berkas' => Role::where('name', 'opd')->value('id'),
+            'telaah-kelayakan' => Role::where('name', 'admin_aptika')->value('id'),
+            'in_development' => Role::where('name', 'ketua_tim')->value('id'),
+            'functional_testing' => Role::where('name', 'admin_aptika')->value('id'),
+            'security_testing' => Role::where('name', 'admin_persandian')->value('id'),
+            'deployment' => Role::where('name', 'admin_infrastruktur')->value('id'),
+            'decommissioning' => Role::where('name', 'admin_infrastruktur')->value('id'),
+        ];
+
         $createdWorkflows = [];
         foreach ($workflows as $wf) {
-            $createdWorkflows[$wf['slug']] = Workflow::firstOrCreate(['slug' => $wf['slug']], $wf);
+            $wf['role_id'] = $roleMap[$wf['slug']] ?? null;
+            $workflowModel = Workflow::firstOrCreate(['slug' => $wf['slug']], $wf);
+            $workflowModel->update(['role_id' => $wf['role_id']]);
+            $createdWorkflows[$wf['slug']] = $workflowModel;
         }
 
         // 2. Master Layanan

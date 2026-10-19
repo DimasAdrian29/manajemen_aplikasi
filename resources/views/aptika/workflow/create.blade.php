@@ -54,6 +54,30 @@
                 @enderror
             </div>
 
+            <!-- Peran Penanggung Jawab / Pelaksana Tahapan -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Peran Pelaksana / Penanggung Jawab Tahapan
+                </label>
+                <select 
+                    name="role_id" 
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1] bg-white"
+                >
+                    <option value="">-- Tanpa Peran Tertentu / Umum --</option>
+                    @foreach ($roles as $r)
+                        <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>
+                            {{ $r->name }} ({{ ucwords(str_replace('_', ' ', $r->name)) }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-[11px] text-slate-400 mt-1">
+                    Pengguna dengan peran ini yang akan menerima tugas pada antrean kerja dan berhak memvalidasi/memajukan tahapan alur.
+                </p>
+                @error('role_id')
+                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Ikon Material Symbols -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">

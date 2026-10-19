@@ -25,6 +25,7 @@ class WorkflowRequest extends FormRequest
             'nama' => ['required', 'string', 'max:255'],
             'deskripsi' => ['nullable', 'string', 'max:2000'],
             'ikon' => ['nullable', 'string', 'max:50'],
+            'role_id' => ['nullable', 'exists:roles,id'],
         ];
     }
 }

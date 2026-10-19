@@ -18,10 +18,21 @@
                     <p class="text-xs text-slate-500 mt-1 leading-relaxed max-w-2xl">
                         {{ $workflow->deskripsi ?? 'Belum ada deskripsi untuk tahapan alur ini.' }}
                     </p>
-                    <div class="flex items-center gap-3 mt-3 text-xs text-slate-400">
+                    <div class="flex items-center gap-3 mt-3 text-xs text-slate-400 flex-wrap">
                         <span class="font-mono">slug: {{ $workflow->slug }}</span>
                         <span>•</span>
                         <span>Dipakai oleh: {{ $workflow->layananWorkflows->count() }} layanan</span>
+                        <span>•</span>
+                        @if ($workflow->role)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="material-symbols-outlined text-[13px]">badge</span>
+                                <span>Peran Pelaksana: {{ ucwords(str_replace('_', ' ', $workflow->role->name)) }}</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] text-slate-400 bg-slate-100 italic">
+                                Peran Pelaksana: Umum / Fleksibel
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>

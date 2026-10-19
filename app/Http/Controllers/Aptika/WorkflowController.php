@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class WorkflowController extends Controller
 {
@@ -23,7 +24,7 @@ class WorkflowController extends Controller
         $search = $request->query('search');
 
         $workflows = Workflow::withCount(['fields', 'layananWorkflows'])
-            ->with(['layananWorkflows.layanan'])
+            ->with(['role', 'layananWorkflows.layanan'])
             ->when($search, function ($query, $search) {
                 $query->where('nama', 'like', "%{$search}%")
                     ->orWhere('deskripsi', 'like', "%{$search}%");
@@ -40,7 +41,9 @@ class WorkflowController extends Controller
      */
     public function create(): View
     {
-        return view('aptika.workflow.create');
+        $roles = Role::orderBy('name')->get();
+
+        return view('aptika.workflow.create', compact('roles'));
     }
 
     /**
@@ -71,6 +74,7 @@ class WorkflowController extends Controller
     public function show(Workflow $workflow): View
     {
         $workflow->load([
+            'role',
             'fields' => function ($q) {
                 $q->orderBy('urutan')->with('masterDokumen');
             },
@@ -87,7 +91,9 @@ class WorkflowController extends Controller
      */
     public function edit(Workflow $workflow): View
     {
-        return view('aptika.workflow.edit', compact('workflow'));
+        $roles = Role::orderBy('name')->get();
+
+        return view('aptika.workflow.edit', compact('workflow', 'roles'));
     }
 
     /**

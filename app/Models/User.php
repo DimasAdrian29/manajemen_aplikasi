@@ -155,4 +155,36 @@ class User extends Authenticatable
 
         return route('login');
     }
+
+    /**
+     * Dapatkan layout blade yang sesuai dengan peran user.
+     */
+    public function userLayout(): string
+    {
+        $roleNames = $this->roles->pluck('name')->toArray();
+
+        if (in_array('superadmin', $roleNames, true)) {
+            return 'layouts.admin';
+        }
+        if (in_array('admin_aptika', $roleNames, true)) {
+            return 'layouts.aptika';
+        }
+        if (in_array('admin_infrastruktur', $roleNames, true)) {
+            return 'layouts.infrastruktur';
+        }
+        if (in_array('admin_persandian', $roleNames, true)) {
+            return 'layouts.persandian';
+        }
+        if (in_array('opd', $roleNames, true)) {
+            return 'layouts.opd';
+        }
+        if (in_array('ketua_tim', $roleNames, true) || in_array('anggota_tim', $roleNames, true)) {
+            return 'layouts.tim';
+        }
+        if (in_array('kepala_bidang', $roleNames, true) || in_array('kepala_dinas', $roleNames, true)) {
+            return 'layouts.eksekutif';
+        }
+
+        return 'layouts.aptika';
+    }
 }

@@ -32,6 +32,7 @@ use App\Http\Controllers\Superadmin\UserController;
 use App\Http\Controllers\Tim\DashboardController as TimDashboardController;
 use App\Http\Controllers\Tim\ProjectController as TimProjectController;
 use App\Http\Controllers\Tim\RapatController as TimRapatController;
+use App\Http\Controllers\Workflow\WorkflowTaskController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman utama: Jika sudah login arahkan ke dashboard peran, jika belum arahkan ke login
@@ -219,6 +220,17 @@ Route::middleware(['auth', 'role_or_permission:ketua_tim|anggota_tim|project.vie
         Route::get('/rapat', [TimRapatController::class, 'index'])->name('rapat.index')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.view');
         Route::get('/rapat/{rapat}', [TimRapatController::class, 'show'])->name('rapat.show')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.view');
         Route::post('/rapat/{rapat}/presensi', [TimRapatController::class, 'presensi'])->name('rapat.presensi')->middleware('role_or_permission:ketua_tim|anggota_tim|rapat.presensi');
+    });
+
+// Antrean Tugas Alur Kerja Universal (Berlaku untuk seluruh peran sesuai alur tahapan aktif)
+Route::middleware('auth')
+    ->prefix('workflow-tasks')
+    ->as('workflow.task.')
+    ->group(function () {
+        Route::get('/', [WorkflowTaskController::class, 'index'])->name('index');
+        Route::get('/{project}', [WorkflowTaskController::class, 'show'])->name('show');
+        Route::post('/{project}/advance', [WorkflowTaskController::class, 'advance'])->name('advance');
+        Route::post('/{project}/revision', [WorkflowTaskController::class, 'revision'])->name('revision');
     });
 
 require __DIR__.'/monitoring.php';
