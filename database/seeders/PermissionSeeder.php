@@ -145,6 +145,14 @@ class PermissionSeeder extends Seeder
                     'workflow.delete' => 'Hapus Master Workflow',
                 ],
             ],
+            'workflow_monitoring' => [
+                'label' => 'Modul 13: Pemantauan & Monitoring Alur Workflow Proyek',
+                'permissions' => [
+                    'workflow.monitoring.view' => 'Akses Menu & Visualisasi Alur Workflow Proyek',
+                    'workflow.monitoring.detail' => 'Lihat Lembar Detail Riwayat Tahapan & Dokumen Proyek',
+                    'workflow.monitoring.export' => 'Cetak & Ekspor Ringkasan Alur Proyek',
+                ],
+            ],
         ];
 
         // 1. Buat / Perbarui seluruh Permission di Database
@@ -171,8 +179,10 @@ class PermissionSeeder extends Seeder
                 'rapat.view', 'rapat.create', 'rapat.edit', 'rapat.presensi', 'rapat.notulensi',
                 'security.audit.view', 'infra.hosting.view', 'infra.deployment.view',
                 'master.instansi.view', 'master.aplikasi.view', 'notification.view',
+                'master.dokumen.view', 'master.dokumen.create', 'master.dokumen.edit', 'master.dokumen.delete',
                 'layanan.view', 'layanan.create', 'layanan.edit', 'layanan.delete',
                 'workflow.view', 'workflow.create', 'workflow.edit', 'workflow.delete',
+                'workflow.monitoring.view', 'workflow.monitoring.detail', 'workflow.monitoring.export',
             ],
 
             'admin_infrastruktur' => [
@@ -180,38 +190,45 @@ class PermissionSeeder extends Seeder
                 'infra.hosting.view', 'infra.hosting.edit',
                 'infra.decommission.view', 'infra.decommission.execute',
                 'project.view', 'master.aplikasi.view', 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail',
             ],
 
             'admin_persandian' => [
                 'security.audit.view', 'security.audit.create', 'security.audit.edit', 'security.audit.issue_cert',
                 'project.view', 'testing.fungsional.view', 'master.aplikasi.view', 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail',
             ],
 
             'opd' => [
                 'pengajuan.view', 'pengajuan.create', 'pengajuan.edit', 'pengajuan.delete',
                 'master.aplikasi.view', 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail',
             ],
 
             'ketua_tim' => [
                 'project.view', 'project.update_progres', 'project.upload_dokumen', 'project.ajukan_penundaan',
                 'rapat.view', 'rapat.create', 'rapat.edit', 'rapat.presensi', 'rapat.notulensi',
                 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail',
             ],
 
             'anggota_tim' => [
                 'project.view', 'project.update_progres', 'project.upload_dokumen',
                 'rapat.view', 'rapat.presensi',
                 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail',
             ],
 
             'kepala_bidang' => [
                 'eksekutif.dashboard.view', 'eksekutif.penundaan.review', 'eksekutif.laporan.view',
                 'project.view', 'pengajuan.view', 'master.aplikasi.view', 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail', 'workflow.monitoring.export',
             ],
 
             'kepala_dinas' => [
                 'eksekutif.dashboard.view', 'eksekutif.laporan.view',
                 'project.view', 'pengajuan.view', 'master.aplikasi.view', 'infra.hosting.view', 'notification.view',
+                'workflow.monitoring.view', 'workflow.monitoring.detail', 'workflow.monitoring.export',
             ],
         ];
 

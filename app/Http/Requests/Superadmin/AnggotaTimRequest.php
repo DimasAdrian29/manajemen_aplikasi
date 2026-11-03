@@ -43,6 +43,7 @@ class AnggotaTimRequest extends FormRequest
             ],
             'no_hp' => ['nullable', 'string', 'max:50'],
             'jabatan' => ['nullable', 'string', 'max:100'],
+            'telegram_id' => ['nullable', 'string', 'max:50'],
         ];
 
         if ($this->isMethod('POST')) {
@@ -65,6 +66,7 @@ class AnggotaTimRequest extends FormRequest
             'name' => 'Nama Lengkap',
             'username' => 'Username',
             'email' => 'Alamat Email',
+            'telegram_id' => 'ID Telegram',
             'no_hp' => 'Nomor HP / WhatsApp',
             'jabatan' => 'Keahlian / Posisi Teknis',
             'password' => 'Kata Sandi',

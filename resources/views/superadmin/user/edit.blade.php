@@ -78,6 +78,62 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- No HP -->
+                <div>
+                    <label for="no_hp" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Nomor HP / WhatsApp
+                    </label>
+                    <input 
+                        type="text" 
+                        name="no_hp" 
+                        id="no_hp" 
+                        value="{{ old('no_hp', $user->no_hp) }}" 
+                        placeholder="0812xxxxxxxx" 
+                        class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('no_hp') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
+                    >
+                    @error('no_hp')
+                        <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Jabatan -->
+                <div>
+                    <label for="jabatan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Jabatan / Posisi
+                    </label>
+                    <input 
+                        type="text" 
+                        name="jabatan" 
+                        id="jabatan" 
+                        value="{{ old('jabatan', $user->jabatan) }}" 
+                        placeholder="Contoh: Staff IT" 
+                        class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('jabatan') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
+                    >
+                    @error('jabatan')
+                        <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Telegram ID -->
+                <div>
+                    <label for="telegram_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        ID Telegram <span class="text-slate-400 font-normal lowercase">(opsional)</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="telegram_id" 
+                        id="telegram_id" 
+                        value="{{ old('telegram_id', $user->telegram_id) }}" 
+                        placeholder="123456789" 
+                        class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('telegram_id') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
+                    >
+                    @error('telegram_id')
+                        <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
             <!-- Password Baru (Opsional) -->
             <div>
                 <label for="password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">

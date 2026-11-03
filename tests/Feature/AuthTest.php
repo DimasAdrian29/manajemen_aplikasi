@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Instansi;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,6 +91,79 @@ class AuthTest extends TestCase
         $user = User::where('username', 'kaido')->first();
 
         $response = $this->actingAs($user)->get('/login');
+
+        $response->assertRedirect(route('superadmin.dashboard'));
+    }
+
+    public function test_opd_registration_page_can_be_rendered(): void
+    {
+        $response = $this->get(route('register'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Pendaftaran Akun OPD');
+        $response->assertSee('Khusus Perwakilan Organisasi Perangkat Daerah');
+        $response->assertSee('Instansi Perangkat Daerah (OPD)');
+        $response->assertSee('Masuk di sini');
+    }
+
+    public function test_opd_user_can_register_successfully(): void
+    {
+        $instansi = Instansi::first();
+
+        $response = $this->post(route('register'), [
+            'instansi_id' => $instansi->id,
+            'name' => 'Operator Disdik Baru',
+            'username' => 'opd_disdik_baru',
+            'email' => 'operator.disdik@riau.go.id',
+            'no_hp' => '081234567890',
+            'jabatan' => 'Pranata Komputer Disdik',
+            'telegram_id' => '554433221',
+            'password' => 'disdikpass123',
+            'password_confirmation' => 'disdikpass123',
+        ]);
+
+        $this->assertAuthenticated();
+
+        $newUser = User::where('username', 'opd_disdik_baru')->first();
+        $this->assertNotNull($newUser);
+        $this->assertSame('Operator Disdik Baru', $newUser->name);
+        $this->assertSame($instansi->id, $newUser->instansi_id);
+        $this->assertSame('554433221', $newUser->telegram_id);
+        $this->assertTrue($newUser->hasRole('opd'));
+
+        $response->assertRedirect(route('opd.dashboard'));
+    }
+
+    public function test_opd_registration_validates_required_fields_and_uniqueness(): void
+    {
+        $existingUser = User::where('username', 'kaido')->first();
+
+        $response = $this->post(route('register'), [
+            'instansi_id' => 99999, // tidak valid
+            'name' => '',
+            'username' => 'kaido', // sudah ada
+            'email' => $existingUser->email, // sudah ada
+            'no_hp' => '',
+            'password' => 'short',
+            'password_confirmation' => 'mismatch',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'instansi_id',
+            'name',
+            'username',
+            'email',
+            'no_hp',
+            'password',
+        ]);
+    }
+
+    public function test_authenticated_user_cannot_access_register_page(): void
+    {
+        $user = User::where('username', 'kaido')->first();
+
+        $response = $this->actingAs($user)->get(route('register'));
 
         $response->assertRedirect(route('superadmin.dashboard'));
     }

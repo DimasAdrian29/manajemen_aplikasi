@@ -44,6 +44,7 @@ class UserRequest extends FormRequest
             'role' => ['required', 'string', 'exists:roles,name'],
             'no_hp' => ['nullable', 'string', 'max:50'],
             'jabatan' => ['nullable', 'string', 'max:100'],
+            'telegram_id' => ['nullable', 'string', 'max:50'],
             'instansi_id' => [
                 'nullable',
                 Rule::requiredIf(fn () => $this->input('role') === 'opd'),
@@ -71,6 +72,7 @@ class UserRequest extends FormRequest
             'name' => 'Nama Lengkap',
             'username' => 'Username',
             'email' => 'Alamat Email',
+            'telegram_id' => 'ID Telegram',
             'role' => 'Peran Pengguna',
             'instansi_id' => 'Instansi OPD',
             'password' => 'Kata Sandi',

@@ -106,8 +106,10 @@ class SuperadminRbacTest extends TestCase
         $response->assertSee('Matriks Hak Akses Peran');
         $response->assertSee('Modul 1: Manajemen Akses & Keamanan Sistem (RBAC)');
         $response->assertSee('Modul 3: Layanan Usulan & Pengajuan OPD');
+        $response->assertSee('Modul 11: Konfigurasi Layanan & Workflow Dinamis');
         $response->assertSee('pengajuan.view');
         $response->assertSee('pengajuan.create');
+        $response->assertSee('workflow.view');
     }
 
     public function test_superadmin_can_update_role_permissions(): void

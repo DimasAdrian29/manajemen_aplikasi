@@ -124,22 +124,24 @@ class RoleController extends Controller
 
         $totalPermissions = Permission::count();
         $systemRolesList = $this->protectedRoles;
+        $totalModules = count($this->getModulesMeta());
 
         return view('superadmin.permission.index', [
             'roles' => $roles,
             'totalPermissions' => $totalPermissions,
+            'totalModules' => $totalModules,
             'systemRolesList' => $systemRolesList,
         ]);
     }
 
     /**
-     * Tampilkan formulir matriks permission untuk peran tertentu.
+     * Metadata grup modul sistem untuk matriks hak akses RBAC.
+     *
+     * @return array<string, array{name: string, icon: string, description: string}>
      */
-    public function permissions(Role $role): View
+    protected function getModulesMeta(): array
     {
-        $allRoles = Role::orderBy('id', 'asc')->get();
-
-        $modulesMeta = [
+        return [
             'rbac' => [
                 'name' => 'Modul 1: Manajemen Akses & Keamanan Sistem (RBAC)',
                 'icon' => 'lock',
@@ -190,7 +192,32 @@ class RoleController extends Controller
                 'icon' => 'history',
                 'description' => 'Jejak rekam audit aktivitas pengguna dan pusat notifikasi alur kerja.',
             ],
+            'layanan_workflow' => [
+                'name' => 'Modul 11: Konfigurasi Layanan & Workflow Dinamis',
+                'icon' => 'account_tree',
+                'description' => 'Konfigurasi siklus alur kerja workflow dinamis, form field kustom, dan relasi layanan.',
+            ],
+            'inventaris_aplikasi' => [
+                'name' => 'Modul 12: Monitoring & Inventaris Daftar Aplikasi',
+                'icon' => 'monitoring',
+                'description' => 'Monitoring dan inventarisasi berkala katalog aplikasi perangkat daerah.',
+            ],
+            'workflow_monitoring' => [
+                'name' => 'Modul 13: Pemantauan & Monitoring Alur Workflow Proyek',
+                'icon' => 'timeline',
+                'description' => 'Akses pemantauan visual alur pipeline workflow proyek aplikasi berjalan se-Provinsi Riau.',
+            ],
         ];
+    }
+
+    /**
+     * Tampilkan formulir matriks permission untuk peran tertentu.
+     */
+    public function permissions(Role $role): View
+    {
+        $allRoles = Role::orderBy('id', 'asc')->get();
+
+        $modulesMeta = $this->getModulesMeta();
 
         $permissionsByModule = Permission::orderBy('id', 'asc')
             ->get()

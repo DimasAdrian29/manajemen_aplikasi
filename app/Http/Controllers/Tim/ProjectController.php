@@ -7,6 +7,7 @@ use App\Models\DokumenPerancangan;
 use App\Models\Penundaan;
 use App\Models\Project;
 use App\Models\TahapanProject;
+use App\Services\Workflow\WorkflowTransitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,10 @@ use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
+    public function __construct(
+        protected WorkflowTransitionService $workflowService
+    ) {}
+
     /**
      * Tampilkan daftar seluruh proyek yang ditugaskan kepada user.
      */
@@ -104,9 +109,12 @@ class ProjectController extends Controller
             'tahapan.*.status' => ['required', 'in:belum_mulai,dalam_pengerjaan,selesai'],
         ]);
 
-        DB::transaction(function () use ($request, $project) {
+        $newProgres = (int) $request->input('progres_total');
+        $transitionOccurred = false;
+
+        DB::transaction(function () use ($request, $project, $newProgres, &$transitionOccurred) {
             // Update progres total proyek
-            $updateData = ['progres_total' => $request->input('progres_total')];
+            $updateData = ['progres_total' => $newProgres];
             if ($request->filled('status')) {
                 $statusVal = $request->input('status');
                 $updateData['status'] = $statusVal;
@@ -150,9 +158,67 @@ class ProjectController extends Controller
                         ]);
                 }
             }
+
+            // SINKRONISASI DATABASE WORKFLOW:
+            // Jika progres mencapai 100% dan proyek saat ini masih berada pada tahapan pengerjaan (initiated/in_development),
+            // otomatis selesaikan tahapan tim pengembang dan majukan ke tahapan Uji Fungsional APTIKA!
+            $currentSlug = $project->currentWorkflow?->workflow?->slug ?? $project->status;
+            $isDevStage = in_array($currentSlug, ['in_development', 'initiated', 'pengembangan']);
+
+            if ($newProgres >= 100 && $isDevStage) {
+                $this->workflowService->advance(
+                    $project,
+                    auth()->user(),
+                    'Pengembangan aplikasi telah tuntas 100% oleh Tim Pengembang dan diserahkan ke Bidang APTIKA untuk Uji Fungsional.'
+                );
+                $transitionOccurred = true;
+            }
         });
 
-        return back()->with('success', 'Progres sprint dan capaian proyek berhasil diperbarui.');
+        $project->refresh();
+        $msg = 'Progres sprint dan capaian proyek berhasil diperbarui.';
+        if ($transitionOccurred) {
+            $nextName = $project->currentWorkflow?->workflow?->nama ?? 'Uji Fungsional Aplikasi';
+            $msg .= " Karena progres telah mencapai 100%, alur workflow proyek otomatis dimajukan ke tahap: {$nextName} (Bidang APTIKA).";
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * Serahkan proyek yang telah tuntas 100% langsung ke Bidang APTIKA untuk Uji Fungsional.
+     */
+    public function serahkanKeTesting(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorizeLead($project);
+
+        $request->validate([
+            'catatan' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($request, $project) {
+            $project->update(['progres_total' => 100]);
+
+            // Tandai seluruh tahapan sprint selesai
+            $project->tahapan()->update([
+                'persentase' => 100,
+                'status' => 'selesai',
+            ]);
+
+            $catatan = $request->input('catatan') ?: 'Pengembangan aplikasi telah tuntas 100% oleh Tim Pengembang dan diserahkan ke Bidang APTIKA untuk Uji Fungsional.';
+
+            $this->workflowService->advance(
+                $project,
+                auth()->user(),
+                $catatan
+            );
+        });
+
+        $project->refresh();
+        $nextName = $project->currentWorkflow?->workflow?->nama ?? 'Uji Fungsional Aplikasi';
+
+        return redirect()->route('tim.project.show', $project)
+            ->with('success', "Proyek '{$project->nama_project}' berhasil diserahkan ke Bidang APTIKA untuk tahapan: {$nextName}!");
     }
 
     /**

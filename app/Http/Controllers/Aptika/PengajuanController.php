@@ -97,11 +97,17 @@ class PengajuanController extends Controller
             'tanggal_penilaian' => Carbon::now(),
         ]);
 
-        // Majukan status tahapan workflow Telaah Kelayakan jika ada
+        // Majukan status tahapan workflow Telaah Kelayakan jika ada (cocokkan slug atau urutan ke-2 alur layanan)
         $telaahStep = $pengajuan->workflowData()
             ->whereHas('layananWorkflow.workflow', function ($q) {
-                $q->where('slug', 'telaah-kelayakan');
-            })->first();
+                $q->whereIn('slug', ['telaah-kelayakan', 'telaah', 'verifikasi', 'review-teknis'])
+                    ->orWhere('slug', 'like', '%telaah%')
+                    ->orWhere('slug', 'like', '%verifikasi%');
+            })->first()
+            ?? $pengajuan->workflowData()
+                ->whereHas('layananWorkflow', function ($q) {
+                    $q->where('urutan', 2);
+                })->first();
 
         if ($telaahStep) {
             // Simpan formulir dinamis jika ada

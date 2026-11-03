@@ -39,6 +39,11 @@ class MasterDokumenPengajuan extends Model
         return $this->hasMany(DokumenPengajuan::class, 'master_dokumen_id');
     }
 
+    public function workflowFields(): HasMany
+    {
+        return $this->hasMany(WorkflowField::class, 'master_dokumen_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

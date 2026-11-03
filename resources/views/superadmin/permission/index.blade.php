@@ -24,7 +24,7 @@
             </div>
             <div>
                 <div class="text-[11px] font-medium text-slate-500">Modul Sistem</div>
-                <div class="text-sm sm:text-base font-bold text-slate-800 leading-tight mt-0.5">10 Poin Modul</div>
+                <div class="text-sm sm:text-base font-bold text-slate-800 leading-tight mt-0.5">{{ $totalModules ?? 12 }} Poin Modul</div>
             </div>
         </div>
 
@@ -136,7 +136,7 @@
                                 @if ($isSuperadmin)
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
                                         <span class="material-symbols-outlined text-[16px] text-amber-700">all_inclusive</span>
-                                        <span>Akses Penuh (10 Modul)</span>
+                                        <span>Akses Penuh ({{ $totalModules ?? 12 }} Modul)</span>
                                     </span>
                                 @else
                                     <div class="inline-flex flex-col items-center">

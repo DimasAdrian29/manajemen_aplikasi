@@ -106,16 +106,24 @@ class ProjectController extends Controller
 
             $devWorkflow = $pengajuan->layanan?->workflows()
                 ->whereHas('workflow', function ($q) {
-                    $q->whereIn('slug', ['in_development', 'pengerjaan', 'pelaksanaan']);
+                    $q->whereIn('slug', ['in_development', 'pengerjaan', 'pelaksanaan', 'pengembangan']);
                 })->first();
 
             if (! $devWorkflow) {
-                // Ambil workflow aktif pertama setelah telaah (urutan > 2), atau workflow pertama
-                $devWorkflow = $pengajuan->layanan?->workflows()
-                    ->where('is_active', true)
-                    ->where('urutan', '>', 2)
-                    ->orderBy('urutan')
-                    ->first() ?? $pengajuan->layanan?->workflows()->orderBy('urutan')->first();
+                // Ambil tahapan alur yang sedang in_progress atau tahapan pertama setelah tahapan telaah
+                $activeStep = $pengajuan->workflowData()
+                    ->where('status', 'in_progress')
+                    ->first();
+
+                if ($activeStep) {
+                    $devWorkflow = $activeStep->layananWorkflow;
+                } else {
+                    $devWorkflow = $pengajuan->layanan?->workflows()
+                        ->where('is_active', true)
+                        ->where('urutan', '>=', 2)
+                        ->orderBy('urutan')
+                        ->first() ?? $pengajuan->layanan?->workflows()->orderBy('urutan')->first();
+                }
             }
 
             // Buat Project

@@ -128,6 +128,24 @@
                 </div>
             </div>
 
+            <!-- ID Telegram (Opsional) -->
+            <div>
+                <label for="telegram_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    ID User Telegram <span class="text-slate-400 font-normal lowercase">(opsional untuk notifikasi alur kerja)</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="telegram_id" 
+                    id="telegram_id" 
+                    value="{{ old('telegram_id', $anggota_tim->telegram_id) }}" 
+                    placeholder="Contoh: 123456789" 
+                    class="block w-full px-3.5 py-2.5 bg-slate-50/50 border @error('telegram_id') border-rose-400 @else border-slate-200 @enderror rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1]"
+                >
+                @error('telegram_id')
+                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Info Note -->
             <div class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 flex items-start gap-2.5">
                 <span class="material-symbols-outlined text-[18px] text-[#0D47A1] shrink-0 mt-0.5">info</span>

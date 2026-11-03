@@ -115,6 +115,8 @@ class AdminAptikaTest extends TestCase
             'status' => 'approved',
         ]);
 
+        $this->actingAs($this->adminAptika)->get(route('aptika.project.create'))->assertStatus(200);
+
         $response = $this->actingAs($this->adminAptika)->post(route('aptika.project.store'), [
             'pengajuan_id' => $pengajuan->id,
             'nama_project' => 'Pengembangan SI-Puskesmas Digital v1.0',
@@ -221,6 +223,9 @@ class AdminAptikaTest extends TestCase
             'status' => 'in_development',
         ]);
 
+        $this->actingAs($this->adminAptika)->get(route('aptika.rapat.index'))->assertStatus(200);
+        $this->actingAs($this->adminAptika)->get(route('aptika.rapat.create'))->assertStatus(200);
+
         $response = $this->actingAs($this->adminAptika)->post(route('aptika.rapat.store'), [
             'project_id' => $project->id,
             'nama_rapat' => 'Rapat Koordinasi Arsitektur Database',
@@ -234,6 +239,7 @@ class AdminAptikaTest extends TestCase
         $this->assertNotNull($rapat);
 
         $response->assertRedirect(route('aptika.rapat.show', $rapat));
+        $this->actingAs($this->adminAptika)->get(route('aptika.rapat.show', $rapat))->assertStatus(200);
 
         $this->assertDatabaseHas('peserta_rapat', [
             'rapat_project_id' => $rapat->id,
@@ -289,6 +295,7 @@ class AdminAptikaTest extends TestCase
         ]);
 
         $response->assertRedirect(route('aptika.rapat.show', $rapat));
+        $this->actingAs($this->adminAptika)->get(route('aptika.rapat.show', $rapat))->assertStatus(200);
 
         $rapat->refresh();
         $this->assertEquals('selesai', $rapat->status);

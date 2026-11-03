@@ -137,14 +137,14 @@
                 @enderror
             </div>
 
-            <!-- 6. Hubungkan Peserta Rapat (Tim Kominfo + Pihak OPD) -->
-            <div class="pt-4 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-2">
+            <!-- 6. Hubungkan Peserta Rapat (Fitur Search & Seleksi Cerdas) -->
+            <div class="pt-4 border-t border-slate-100 space-y-3">
+                <div class="flex items-center justify-between">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                             Hubungkan Peserta Rapat <span class="text-rose-500">*</span>
                         </label>
-                        <p class="text-[11px] text-slate-400">Pilih tim internal Kominfo dan perwakilan OPD yang diundang dalam rapat ini.</p>
+                        <p class="text-[11px] text-slate-400">Gunakan kolom pencarian di bawah untuk menemukan dan memilih personil tim atau OPD.</p>
                     </div>
                     <span class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                         <span class="material-symbols-outlined text-[14px]">notifications_active</span>
@@ -152,25 +152,71 @@
                     </span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-3 rounded-xl border border-slate-200 bg-slate-50/40">
-                    @foreach ($allUsers as $u)
-                        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-white border border-slate-200/80 hover:border-slate-300 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                name="peserta_ids[]" 
-                                value="{{ $u->id }}" 
-                                {{ in_array($u->id, old('peserta_ids', [])) ? 'checked' : '' }}
-                                class="w-4 h-4 rounded text-[#0D47A1] focus:ring-[#0D47A1] border-slate-300"
-                            >
-                            <div class="text-xs overflow-hidden">
-                                <div class="font-bold text-slate-900 truncate">{{ $u->name }}</div>
-                                <div class="text-[11px] text-slate-500 truncate">
-                                    {{ $u->roles->first()->name ?? '-' }} • {{ $u->instansi->nama_instansi ?? 'Diskominfo Riau' }}
-                                </div>
-                            </div>
-                        </label>
-                    @endforeach
+                <!-- Input Pencarian Peserta -->
+                <div class="relative">
+                    <span class="material-symbols-outlined text-[20px] text-slate-400 absolute left-3.5 top-2.5">search</span>
+                    <input 
+                        type="text" 
+                        id="searchPesertaInput" 
+                        oninput="handlePesertaSearch(this.value)" 
+                        placeholder="Ketik nama personil, peran, atau OPD (contoh: Ahmad, Programmer, Dinkes)..." 
+                        class="w-full pl-11 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D47A1]/20 focus:border-[#0D47A1] shadow-2xs"
+                    >
+                    <button 
+                        type="button" 
+                        id="clearSearchBtn" 
+                        onclick="clearPesertaSearch()" 
+                        class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title="Hapus pencarian"
+                    >
+                        <span class="material-symbols-outlined text-[18px]">close</span>
+                    </button>
                 </div>
+
+                <!-- Kotak Hasil Pencarian (Hanya Muncul Saat Pengguna Mencari) -->
+                <div id="searchResultsBox" class="hidden rounded-xl border border-blue-100 bg-blue-50/30 p-3 space-y-2">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                        <span>Hasil Pencarian:</span>
+                        <span id="searchResultCount" class="text-blue-700 font-mono">0 ditemukan</span>
+                    </div>
+
+                    <div id="searchResultsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div id="noResultsNotice" class="hidden py-4 text-center text-xs text-slate-400">
+                        Tidak ada personil yang cocok dengan kata kunci pencarian.
+                    </div>
+                </div>
+
+                <!-- Kontainer Peserta Terpilih (Chips / List Terkumpul) -->
+                <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-[#0D47A1]">how_to_reg</span>
+                            <span>Daftar Peserta Terpilih (<span id="selectedCountBadge" class="text-[#0D47A1]">0</span> Orang)</span>
+                        </span>
+                        <button type="button" id="clearAllSelectedBtn" onclick="clearAllSelected()" class="hidden text-[11px] font-semibold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer">
+                            Hapus Semua
+                        </button>
+                    </div>
+
+                    <!-- Hidden inputs container for form submission -->
+                    <div id="hiddenPesertaInputs"></div>
+
+                    <!-- Selected participants grid -->
+                    <div id="selectedPesertaGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Empty State saat belum ada yang dipilih -->
+                    <div id="emptySelectedNotice" class="py-6 text-center text-slate-400">
+                        <span class="material-symbols-outlined text-[32px] text-slate-300 block mb-1">person_search</span>
+                        <p class="text-xs font-medium">Belum ada peserta yang dipilih.</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Ketik di kolom pencarian di atas untuk menemukan dan menambahkan personil yang akan diundang.</p>
+                    </div>
+                </div>
+
                 @error('peserta_ids')
                     <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -189,4 +235,226 @@
         </form>
     </div>
 </div>
+
+@php
+    $preparedUsers = $allUsers->map(function ($u) {
+        $roleName = $u->roles->first()?->name ?? 'user';
+        $roleLabel = ucwords(str_replace('_', ' ', $roleName));
+        $instansiName = $u->instansi?->nama_instansi ?? 'Dinas Kominfotik Riau';
+
+        return [
+            'id' => (int) $u->id,
+            'name' => (string) $u->name,
+            'email' => (string) $u->email,
+            'role' => (string) $roleName,
+            'role_label' => (string) $roleLabel,
+            'instansi' => (string) $instansiName,
+            'initials' => strtoupper(substr((string) $u->name, 0, 2)),
+        ];
+    })->values();
+
+    $initialSelected = old('peserta_ids', $potentialParticipants->pluck('id')->toArray());
+    $initialSelected = array_values(array_unique(array_map('intval', (array) $initialSelected)));
+@endphp
+
+<script>
+    const allUsersData = @json($preparedUsers);
+    const userMap = new Map(allUsersData.map(u => [u.id, u]));
+    let selectedPesertaIds = new Set(@json($initialSelected));
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function handlePesertaSearch(query) {
+        const q = (query || '').trim().toLowerCase();
+        const resultsBox = document.getElementById('searchResultsBox');
+        const resultsList = document.getElementById('searchResultsList');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const countSpan = document.getElementById('searchResultCount');
+        const noResults = document.getElementById('noResultsNotice');
+
+        if (!q) {
+            resultsBox.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            resultsList.innerHTML = '';
+            return;
+        }
+
+        clearBtn.classList.remove('hidden');
+        resultsBox.classList.remove('hidden');
+
+        // Filter pencarian berdasarkan nama, email, role, atau OPD
+        const filtered = allUsersData.filter(u => {
+            return u.name.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q) ||
+                u.role_label.toLowerCase().includes(q) ||
+                u.instansi.toLowerCase().includes(q);
+        });
+
+        countSpan.textContent = `${filtered.length} ditemukan`;
+
+        if (filtered.length === 0) {
+            resultsList.innerHTML = '';
+            noResults.classList.remove('hidden');
+            return;
+        }
+
+        noResults.classList.add('hidden');
+        resultsList.innerHTML = filtered.map(u => {
+            const isSelected = selectedPesertaIds.has(u.id);
+            const btnClass = isSelected
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                : 'bg-[#0D47A1] text-white hover:bg-blue-800';
+            const btnText = isSelected ? '✓ Terpilih' : '+ Tambah';
+
+            return `
+                <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 hover:border-blue-300 transition gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 text-[#0D47A1] font-bold text-xs flex items-center justify-center shrink-0">
+                            ${escapeHtml(u.initials)}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(u.name)}</p>
+                            <div class="flex items-center gap-1.5 text-[10px] text-slate-500 truncate">
+                                <span class="inline-block px-1.5 py-0.5 rounded font-medium bg-slate-100 text-slate-600">${escapeHtml(u.role_label)}</span>
+                                <span class="text-slate-300">•</span>
+                                <span class="truncate">${escapeHtml(u.instansi)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="togglePeserta(${u.id})" 
+                        class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition cursor-pointer ${btnClass}"
+                        title="${isSelected ? 'Klik untuk membatalkan' : 'Klik untuk menambahkan peserta'}"
+                    >
+                        ${btnText}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function togglePeserta(userId) {
+        userId = Number(userId);
+        if (selectedPesertaIds.has(userId)) {
+            selectedPesertaIds.delete(userId);
+        } else {
+            selectedPesertaIds.add(userId);
+        }
+        renderSelectedPeserta();
+
+        const searchInput = document.getElementById('searchPesertaInput');
+        if (searchInput && searchInput.value.trim()) {
+            handlePesertaSearch(searchInput.value);
+        }
+    }
+
+    function removePeserta(userId) {
+        userId = Number(userId);
+        selectedPesertaIds.delete(userId);
+        renderSelectedPeserta();
+
+        const searchInput = document.getElementById('searchPesertaInput');
+        if (searchInput && searchInput.value.trim()) {
+            handlePesertaSearch(searchInput.value);
+        }
+    }
+
+    function clearPesertaSearch() {
+        const searchInput = document.getElementById('searchPesertaInput');
+        if (searchInput) {
+            searchInput.value = '';
+            handlePesertaSearch('');
+            searchInput.focus();
+        }
+    }
+
+    function clearAllSelected() {
+        if (selectedPesertaIds.size === 0) return;
+        if (confirm('Apakah Anda yakin ingin menghapus semua peserta terpilih?')) {
+            selectedPesertaIds.clear();
+            renderSelectedPeserta();
+
+            const searchInput = document.getElementById('searchPesertaInput');
+            if (searchInput && searchInput.value.trim()) {
+                handlePesertaSearch(searchInput.value);
+            }
+        }
+    }
+
+    function renderSelectedPeserta() {
+        const countBadge = document.getElementById('selectedCountBadge');
+        const clearAllBtn = document.getElementById('clearAllSelectedBtn');
+        const emptyNotice = document.getElementById('emptySelectedNotice');
+        const grid = document.getElementById('selectedPesertaGrid');
+        const hiddenInputs = document.getElementById('hiddenPesertaInputs');
+
+        const count = selectedPesertaIds.size;
+        if (countBadge) countBadge.textContent = count;
+
+        if (count === 0) {
+            if (clearAllBtn) clearAllBtn.classList.add('hidden');
+            if (emptyNotice) emptyNotice.classList.remove('hidden');
+            if (grid) grid.innerHTML = '';
+            if (hiddenInputs) hiddenInputs.innerHTML = '';
+            return;
+        }
+
+        if (clearAllBtn) clearAllBtn.classList.remove('hidden');
+        if (emptyNotice) emptyNotice.classList.add('hidden');
+
+        // Render hidden inputs
+        let hiddenHtml = '';
+        let gridHtml = '';
+
+        selectedPesertaIds.forEach(id => {
+            hiddenHtml += `<input type="hidden" name="peserta_ids[]" value="${id}">`;
+
+            const u = userMap.get(id);
+            if (u) {
+                gridHtml += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-[#0D47A1] font-bold text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                                ${escapeHtml(u.initials)}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(u.name)}</p>
+                                <div class="flex items-center gap-1.5 text-[10px] text-slate-500 truncate">
+                                    <span class="inline-block px-1.5 py-0.5 rounded font-medium bg-slate-100 text-slate-600">${escapeHtml(u.role_label)}</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="truncate">${escapeHtml(u.instansi)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            type="button" 
+                            onclick="removePeserta(${u.id})" 
+                            class="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0" 
+                            title="Hapus dari daftar peserta"
+                        >
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        if (hiddenInputs) hiddenInputs.innerHTML = hiddenHtml;
+        if (grid) grid.innerHTML = gridHtml;
+    }
+
+    // Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        renderSelectedPeserta();
+    });
+</script>
 @endsection

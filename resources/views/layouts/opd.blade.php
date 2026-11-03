@@ -97,6 +97,13 @@
                     <span>Tugas Alur Saya</span>
                 </a>
 
+                @can('workflow.monitoring.view')
+                    <a href="{{ route('workflow.monitoring.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('workflow.monitoring.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
+                        <span class="material-symbols-outlined text-[20px]">hub</span>
+                        <span>Monitoring Alur</span>
+                    </a>
+                @endcan
+
                 @canany(['pengajuan.create', 'pengajuan.view', 'master.aplikasi.view'])
                     <div class="pt-4 pb-1.5 px-3 text-[11px] font-bold text-slate-400 tracking-wider uppercase">
                         Layanan Aplikasi
@@ -112,8 +119,8 @@
 
                 @can('pengajuan.view')
                     <a href="{{ route('opd.pengajuan.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('opd.pengajuan.index') || request()->routeIs('opd.pengajuan.show') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
-                        <span class="material-symbols-outlined text-[20px]">history_edu</span>
-                        <span>Riwayat Pengajuan</span>
+                        <span class="material-symbols-outlined text-[20px]">timeline</span>
+                        <span>Riwayat & Pelacakan Usulan</span>
                     </a>
                 @endcan
 
@@ -129,24 +136,30 @@
         <!-- Sidebar Footer (User Info & Logout) -->
         <div class="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
             <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase shadow-xs">
+                <a href="{{ route('profile.edit') }}" class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shrink-0 uppercase shadow-xs hover:opacity-90 transition" title="Lihat Profil">
                     {{ substr(auth()->user()->name ?? 'O', 0, 2) }}
-                </div>
-                <div class="overflow-hidden">
-                    <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->name ?? 'Operator OPD' }}</p>
+                </a>
+                <div class="overflow-hidden flex-1 min-w-0">
+                    <a href="{{ route('profile.edit') }}" class="text-xs font-bold text-slate-900 truncate hover:text-emerald-700 transition block">{{ auth()->user()->name ?? 'Operator OPD' }}</a>
                     <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
                         {{ auth()->user()->roles->first()?->name ? ucwords(str_replace('_', ' ', auth()->user()->roles->first()->name)) : 'Operator OPD' }}
                     </span>
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 transition cursor-pointer">
-                    <span class="material-symbols-outlined text-[18px]">logout</span>
-                    <span>Keluar Sistem</span>
-                </button>
-            </form>
+            <div class="grid grid-cols-2 gap-2">
+                <a href="{{ route('profile.edit') }}" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 hover:text-emerald-700 transition shadow-xs">
+                    <span class="material-symbols-outlined text-[17px] text-emerald-700">account_circle</span>
+                    <span>Profil</span>
+                </a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 transition cursor-pointer">
+                        <span class="material-symbols-outlined text-[17px]">logout</span>
+                        <span>Keluar</span>
+                    </button>
+                </form>
+            </div>
         </div>
     </aside>
 
@@ -167,6 +180,10 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-emerald-50/50 hover:border-emerald-200 transition text-xs font-semibold text-slate-700 hover:text-emerald-700" title="Pengaturan Profil">
+                    <span class="material-symbols-outlined text-[18px] text-emerald-700">account_circle</span>
+                    <span class="hidden sm:inline">Profil</span>
+                </a>
                 <a href="{{ route('opd.pengajuan.create') }}" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0D47A1] hover:bg-[#165eae] text-white text-xs font-semibold shadow-sm transition">
                     <span class="material-symbols-outlined text-[16px]">add</span>
                     <span>Buat Permohonan</span>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Aptika\DashboardController as AptikaDashboardController;
 use App\Http\Controllers\Aptika\LayananController as AptikaLayananController;
+use App\Http\Controllers\Aptika\MasterDokumenController as AptikaMasterDokumenController;
 use App\Http\Controllers\Aptika\PengajuanController as AptikaPengajuanController;
 use App\Http\Controllers\Aptika\ProjectController as AptikaProjectController;
 use App\Http\Controllers\Aptika\RapatController as AptikaRapatController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Opd\DashboardController as OpdDashboardController;
 use App\Http\Controllers\Opd\PengajuanController as OpdPengajuanController;
 use App\Http\Controllers\Persandian\DashboardController as PersandianDashboardController;
 use App\Http\Controllers\Persandian\PengujianController as PersandianPengujianController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Superadmin\AnggotaTimController;
 use App\Http\Controllers\Superadmin\AplikasiController;
 use App\Http\Controllers\Superadmin\DashboardController;
@@ -32,6 +34,7 @@ use App\Http\Controllers\Superadmin\UserController;
 use App\Http\Controllers\Tim\DashboardController as TimDashboardController;
 use App\Http\Controllers\Tim\ProjectController as TimProjectController;
 use App\Http\Controllers\Tim\RapatController as TimRapatController;
+use App\Http\Controllers\Workflow\WorkflowMonitoringController;
 use App\Http\Controllers\Workflow\WorkflowTaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,16 +49,25 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Autentikasi (Tamu / Guest)
+// Autentikasi & Pendaftaran Tamu (Guest)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 });
 
 // Logout (Hanya User Terautentikasi)
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+// Pengaturan Profil & Kata Sandi Akun (Universal untuk Semua Peran)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+});
 
 // Panel Superadmin
 Route::middleware(['auth', 'role_or_permission:superadmin|rbac.user.view|rbac.role.view|rbac.matrix.manage|master.instansi.view|master.dokumen.view|master.aplikasi.create'])
@@ -91,8 +103,8 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::patch('/pengajuan/{pengajuan}/review', [AptikaPengajuanController::class, 'review'])->name('pengajuan.review')->middleware('role_or_permission:admin_aptika|pengajuan.review');
 
         // Manajemen Proyek
-        Route::resource('project', AptikaProjectController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|project.view');
         Route::resource('project', AptikaProjectController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|project.create');
+        Route::resource('project', AptikaProjectController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|project.view');
         Route::patch('/project/{project}/status', [AptikaProjectController::class, 'updateStatus'])->name('project.status')->middleware('role_or_permission:admin_aptika|project.edit');
         Route::patch('/project/{project}/tim', [AptikaProjectController::class, 'updateTim'])->name('project.tim')->middleware('role_or_permission:admin_aptika|project.manage_tim');
         Route::patch('/project/{project}/dokumen/{dokumen}/review', [AptikaProjectController::class, 'reviewDokumen'])->name('project.dokumen.review')->middleware('role_or_permission:admin_aptika|project.review_dokumen');
@@ -102,8 +114,8 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::resource('testing', AptikaTestingController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|testing.fungsional.create');
 
         // Manajemen Rapat Proyek & Notifikasi
-        Route::resource('rapat', AptikaRapatController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|rapat.view');
         Route::resource('rapat', AptikaRapatController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|rapat.create');
+        Route::resource('rapat', AptikaRapatController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|rapat.view');
         Route::patch('/rapat/{rapat}/notulensi', [AptikaRapatController::class, 'notulensi'])->name('rapat.notulensi')->middleware('role_or_permission:admin_aptika|rapat.notulensi');
 
         // Konfigurasi Layanan & Susunan Workflow Dinamis
@@ -119,6 +131,12 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::put('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'updateField'])->name('workflow.field.update')->middleware('role_or_permission:admin_aptika|workflow.edit');
         Route::delete('workflow/{workflow}/field/{field}', [AptikaWorkflowController::class, 'destroyField'])->name('workflow.field.destroy')->middleware('role_or_permission:admin_aptika|workflow.edit');
         Route::patch('workflow/{workflow}/field/reorder', [AptikaWorkflowController::class, 'reorderField'])->name('workflow.field.reorder')->middleware('role_or_permission:admin_aptika|workflow.edit');
+
+        // Quick Master Dokumen Inline (Workflow Field Slot)
+        Route::get('master-dokumen/{masterDokumen}', [AptikaMasterDokumenController::class, 'show'])->name('master-dokumen.show')->middleware('role_or_permission:admin_aptika|master.dokumen.view');
+        Route::post('master-dokumen', [AptikaMasterDokumenController::class, 'store'])->name('master-dokumen.store')->middleware('role_or_permission:admin_aptika|master.dokumen.create');
+        Route::put('master-dokumen/{masterDokumen}', [AptikaMasterDokumenController::class, 'update'])->name('master-dokumen.update')->middleware('role_or_permission:admin_aptika|master.dokumen.edit');
+        Route::delete('master-dokumen/{masterDokumen}', [AptikaMasterDokumenController::class, 'destroy'])->name('master-dokumen.destroy')->middleware('role_or_permission:admin_aptika|master.dokumen.delete');
     });
 
 Route::middleware(['auth', 'role_or_permission:admin_infrastruktur|infra.deployment.view|infra.hosting.view|infra.decommission.view'])
@@ -212,6 +230,7 @@ Route::middleware(['auth', 'role_or_permission:ketua_tim|anggota_tim|project.vie
         Route::get('/project', [TimProjectController::class, 'index'])->name('project.index')->middleware('role_or_permission:ketua_tim|anggota_tim|project.view');
         Route::get('/project/{project}', [TimProjectController::class, 'show'])->name('project.show')->middleware('role_or_permission:ketua_tim|anggota_tim|project.view');
         Route::patch('/project/{project}/progres', [TimProjectController::class, 'updateProgres'])->name('project.progres')->middleware('role_or_permission:ketua_tim|anggota_tim|project.update_progres');
+        Route::post('/project/{project}/serahkan-testing', [TimProjectController::class, 'serahkanKeTesting'])->name('project.serahkan_testing')->middleware('role_or_permission:ketua_tim|anggota_tim|project.update_progres');
         Route::post('/project/{project}/tahapan', [TimProjectController::class, 'storeTahapan'])->name('project.tahapan')->middleware('role_or_permission:ketua_tim|anggota_tim|project.update_progres');
         Route::post('/project/{project}/dokumen', [TimProjectController::class, 'storeDokumen'])->name('project.dokumen')->middleware('role_or_permission:ketua_tim|anggota_tim|project.upload_dokumen');
         Route::post('/project/{project}/penundaan', [TimProjectController::class, 'storePenundaan'])->name('project.penundaan')->middleware('role_or_permission:ketua_tim|anggota_tim|project.ajukan_penundaan');
@@ -231,6 +250,17 @@ Route::middleware('auth')
         Route::get('/{project}', [WorkflowTaskController::class, 'show'])->name('show');
         Route::post('/{project}/advance', [WorkflowTaskController::class, 'advance'])->name('advance');
         Route::post('/{project}/revision', [WorkflowTaskController::class, 'revision'])->name('revision');
+    });
+
+// Pemantauan & Monitoring Alur Workflow Proyek Aplikasi Berjalan (Multi-Role Dinamis via RBAC Permission)
+Route::middleware(['auth', 'permission:workflow.monitoring.view'])
+    ->prefix('workflow-monitoring')
+    ->as('workflow.monitoring.')
+    ->group(function () {
+        Route::get('/', [WorkflowMonitoringController::class, 'index'])->name('index');
+        Route::get('/{project}', [WorkflowMonitoringController::class, 'show'])
+            ->name('show')
+            ->middleware('permission:workflow.monitoring.detail');
     });
 
 require __DIR__.'/monitoring.php';

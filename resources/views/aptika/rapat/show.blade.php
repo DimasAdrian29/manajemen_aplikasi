@@ -88,7 +88,7 @@
                         <div>
                             <h4 class="text-sm font-bold text-slate-900">{{ $p->user->name }}</h4>
                             <div class="text-xs text-slate-500 mt-0.5">
-                                {{ $p->user->roles->first()->name ?? '-' }} • {{ $p->user->instansi->nama_instansi ?? 'Diskominfo Riau' }}
+                                {{ $p->user->roles->first()?->name ?? '-' }} • {{ $p->user->instansi->nama_instansi ?? 'Diskominfo Riau' }}
                             </div>
                         </div>
                     </div>

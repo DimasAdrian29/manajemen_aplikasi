@@ -15,6 +15,41 @@
         </div>
     @endif
 
+    @if(session('info'))
+        <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">info</span>
+            <span>{{ session('info') }}</span>
+        </div>
+    @endif
+
+    <!-- Dedicated Module Redirection Banner (jika tahapan ini memiliki modul kerja khusus di menu lain) -->
+    @if(isset($dedicatedMeta) && !empty($dedicatedMeta['url']) && $dedicatedMeta['url'] !== route('workflow.task.show', $project))
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 text-blue-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+            <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-[#0D47A1] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <span class="material-symbols-outlined text-[22px]">{{ $dedicatedMeta['icon'] }}</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-200/60 text-[#0D47A1]">
+                            Modul Terintegrasi
+                        </span>
+                        <p class="text-xs font-bold text-slate-900">
+                            Menu: <span class="text-[#0D47A1]">{{ $dedicatedMeta['menu'] }}</span>
+                        </p>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">
+                        Tahapan ini terintegrasi penuh pada formulir khusus. Anda sangat disarankan untuk memprosesnya melalui modul resminya agar seluruh artefak & pengujian tercatat akurat.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ $dedicatedMeta['url'] }}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0D47A1] hover:bg-[#1565C0] text-white text-xs font-bold transition shadow-xs shrink-0 self-stretch sm:self-auto justify-center">
+                <span>{{ $dedicatedMeta['label'] }}</span>
+                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+            </a>
+        </div>
+    @endif
+
     <!-- Project Context Header Card -->
     <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -69,7 +104,7 @@
         <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
             <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <span class="material-symbols-outlined text-[#0D47A1]">checklist</span>
-                <h3 class="text-sm font-bold text-slate-900">Formulir Kelengkapan & Parameter Verifikasi</h3>
+                <h3 class="text-sm font-bold text-slate-900">Formulir Kelengkapan & Parameter Verifikasi Universal</h3>
             </div>
 
             <x-workflow-step-fields :workflow="$project->currentWorkflow" :workflowData="$workflowData" />

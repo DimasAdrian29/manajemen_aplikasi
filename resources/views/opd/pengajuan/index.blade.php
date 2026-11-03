@@ -143,9 +143,9 @@
                             </td>
                             <td class="py-4 px-6 text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <a href="{{ route('opd.pengajuan.show', $item) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#0D47A1] bg-blue-50 hover:bg-blue-100 transition">
-                                        <span class="material-symbols-outlined text-[15px]">visibility</span>
-                                        <span>Detail</span>
+                                    <a href="{{ route('opd.pengajuan.show', $item) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#0D47A1] bg-blue-50 hover:bg-blue-100 transition shadow-2xs" title="Lacak progres tahapan workflow & detail berkas">
+                                        <span class="material-symbols-outlined text-[15px]">timeline</span>
+                                        <span>Lacak Alur</span>
                                     </a>
 
                                     @if (in_array($item->status, ['draft', 'submitted']))

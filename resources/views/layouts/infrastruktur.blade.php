@@ -97,6 +97,13 @@
                     <span>Tugas Alur Saya</span>
                 </a>
 
+                @can('workflow.monitoring.view')
+                    <a href="{{ route('workflow.monitoring.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {{ request()->routeIs('workflow.monitoring.*') ? 'bg-[#0D47A1] text-white shadow-sm shadow-[#0D47A1]/25' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0D47A1]' }}">
+                        <span class="material-symbols-outlined text-[20px]">timeline</span>
+                        <span>Monitoring Alur</span>
+                    </a>
+                @endcan
+
                 @canany(['infra.deployment.view', 'infra.hosting.view'])
                     <div class="pt-4 pb-1.5 px-3 text-[11px] font-bold text-slate-400 tracking-wider uppercase">
                         Operasional Deployment
@@ -147,19 +154,24 @@
         <!-- User Profile Card in Sidebar -->
         <div class="p-3 border-t border-slate-100 bg-slate-50/50 shrink-0">
             <div class="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200/80">
-                <div class="w-9 h-9 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                <a href="{{ route('profile.edit') }}" class="w-9 h-9 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs hover:opacity-90 transition" title="Lihat Profil">
                     {{ strtoupper(substr(auth()->user()->name ?? 'INF', 0, 2)) }}
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-bold text-slate-800 truncate leading-snug">{{ auth()->user()->name ?? 'Admin Infrastruktur' }}</p>
+                </a>
+                <a href="{{ route('profile.edit') }}" class="min-w-0 flex-1 group" title="Lihat Profil">
+                    <p class="text-xs font-bold text-slate-800 truncate leading-snug group-hover:text-cyan-700 transition">{{ auth()->user()->name ?? 'Admin Infrastruktur' }}</p>
                     <p class="text-[11px] font-medium text-slate-500 truncate leading-snug">{{ auth()->user()->email ?? 'infrastruktur@riau.go.id' }}</p>
+                </a>
+                <div class="flex items-center gap-1">
+                    <a href="{{ route('profile.edit') }}" class="p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 transition" title="Profil Saya">
+                        <span class="material-symbols-outlined text-[18px]">account_circle</span>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" title="Keluar" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+                            <span class="material-symbols-outlined text-[18px]">logout</span>
+                        </button>
+                    </form>
                 </div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" title="Keluar" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
-                        <span class="material-symbols-outlined text-[18px]">logout</span>
-                    </button>
-                </form>
             </div>
         </div>
     </aside>
@@ -180,6 +192,10 @@
 
             <!-- Topbar Actions -->
             <div class="flex items-center gap-3">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-cyan-50/50 hover:border-cyan-200 transition text-xs font-semibold text-slate-700 hover:text-cyan-700" title="Pengaturan Profil">
+                    <span class="material-symbols-outlined text-[18px] text-cyan-600">account_circle</span>
+                    <span class="hidden sm:inline">Profil</span>
+                </a>
                 <!-- Server Status Indicator -->
                 <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

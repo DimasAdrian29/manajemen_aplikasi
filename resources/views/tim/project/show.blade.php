@@ -78,6 +78,15 @@
                         <span class="material-symbols-outlined text-[16px]">trending_up</span>
                         <span>Update Capaian Sprint</span>
                     </button>
+                    @if ($project->status === 'in_development' || ($project->currentWorkflow?->workflow?->slug ?? '') === 'in_development')
+                        <form method="POST" action="{{ route('tim.project.serahkan_testing', $project) }}" onsubmit="return confirm('Apakah Anda yakin seluruh modul pengembangan telah selesai 100% dan siap diserahkan ke Bidang APTIKA untuk Uji Fungsional?')">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                                <span class="material-symbols-outlined text-[16px]">verified</span>
+                                <span>Serahkan ke Uji Fungsional APTIKA</span>
+                            </button>
+                        </form>
+                    @endif
                     <button type="button" onclick="openModalTambahDokumen()" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                         <span class="material-symbols-outlined text-[16px]">post_add</span>
                         <span>Tambah Dokumen / Link Docs</span>
@@ -513,6 +522,15 @@
                             </div>
                         </div>
                     @endif
+
+                    <!-- Catatan Otomatisasi Workflow -->
+                    <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+                        <span class="material-symbols-outlined text-[#0D47A1] text-[18px] shrink-0 mt-0.5">info</span>
+                        <div class="leading-relaxed">
+                            <span class="font-bold block">Sinkronisasi Alur Otomatis:</span>
+                            Jika Akumulasi Progres Total diisi <strong>100%</strong>, sistem akan otomatis menyelesaikan tahapan pengerjaan tim dan meneruskan proyek ke tahap <strong>Uji Fungsional Aplikasi (Bidang APTIKA)</strong>.
+                        </div>
+                    </div>
 
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                         <button type="button" onclick="closeModalUpdateProgres()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">

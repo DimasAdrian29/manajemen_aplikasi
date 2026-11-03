@@ -120,7 +120,7 @@ class WorkflowTransitionService
                 ]);
 
                 if ($pengajuan) {
-                    PengajuanWorkflowData::firstOrCreate(
+                    $nextWfData = PengajuanWorkflowData::firstOrCreate(
                         [
                             'pengajuan_id' => $pengajuan->id,
                             'layanan_workflow_id' => $nextLayananWorkflow->id,
@@ -129,6 +129,7 @@ class WorkflowTransitionService
                             'status' => 'in_progress',
                         ]
                     );
+                    $nextWfData->update(['status' => 'in_progress']);
                 }
 
                 return $nextLayananWorkflow;

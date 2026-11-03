@@ -49,7 +49,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-100/80 border border-slate-200/70 mb-6">
             <div class="text-xs font-bold text-slate-700 flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px] text-[#0D47A1]">checklist</span>
-                <span>Matriks 10 Poin Modul Sistem</span>
+                <span>Matriks {{ count($modulesMeta) }} Poin Modul Sistem</span>
                 <span class="px-2 py-0.5 rounded-full bg-white text-slate-700 text-[11px] font-bold border border-slate-200" id="totalActivePermissionsCount">
                     {{ count($rolePermissions) }} Izin Terpilih
                 </span>

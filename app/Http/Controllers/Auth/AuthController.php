@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\OpdRegisterRequest;
+use App\Models\Instansi;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -56,6 +59,38 @@ class AuthController extends Controller
             ->withErrors([
                 'login' => 'Kredensial yang dimasukkan tidak sesuai dengan data kami.',
             ]);
+    }
+
+    /**
+     * Tampilkan formulir pendaftaran akun khusus perwakilan OPD.
+     */
+    public function showRegisterForm(): View|RedirectResponse
+    {
+        if (Auth::check()) {
+            return $this->redirectBasedOnRole(Auth::user());
+        }
+
+        $instansis = Instansi::orderBy('nama_instansi')->get();
+
+        return view('auth.register', compact('instansis'));
+    }
+
+    /**
+     * Proses pendaftaran akun mandiri untuk OPD.
+     */
+    public function register(OpdRegisterRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $data['password'] = Hash::make($data['password']);
+
+        $user = User::create($data);
+        $user->assignRole('opd');
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('opd.dashboard')
+            ->with('success', 'Pendaftaran akun OPD berhasil! Selamat datang di Portal Layanan SIMBANGDA, '.$user->name.'.');
     }
 
     /**

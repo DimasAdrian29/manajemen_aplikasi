@@ -66,7 +66,7 @@ class RapatController extends Controller
         // Semua user yang relevan jika project belum dipilih secara spesifik
         $allUsers = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['ketua_tim', 'anggota_tim', 'opd', 'admin_aptika', 'kepala_bidang']);
-        })->with('instansi')->orderBy('name')->get();
+        })->with(['instansi', 'roles'])->orderBy('name')->get();
 
         return view('aptika.rapat.create', compact('projects', 'selectedProject', 'potentialParticipants', 'allUsers'));
     }
