@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'user_id',
     'status_kehadiran',
     'notifikasi_dikirim_at',
+    'reminder_dikirim_at',
 ])]
 class PesertaRapat extends Model
 {
@@ -28,6 +29,7 @@ class PesertaRapat extends Model
     {
         return [
             'notifikasi_dikirim_at' => 'datetime',
+            'reminder_dikirim_at' => 'datetime',
         ];
     }
 

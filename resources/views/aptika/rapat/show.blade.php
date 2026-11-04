@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
             <a href="{{ route('aptika.rapat.index') }}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-[16px]">arrow_back</span>
                 <span>Daftar Rapat</span>
@@ -49,6 +49,16 @@
                     <span class="material-symbols-outlined text-[16px]">description</span>
                     <span>Surat Undangan</span>
                 </a>
+            @endif
+            @if ($rapat->status === 'dijadwalkan')
+                <form method="POST" action="{{ route('aptika.rapat.reminder', $rapat) }}" onsubmit="return confirm('Kirim reminder rapat melalui Telegram ke seluruh peserta sekarang?')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[16px]">send</span>
+                        <span>Kirim Reminder Telegram</span>
+                    </button>
+                </form>
             @endif
         </div>
     </div>
@@ -89,6 +99,22 @@
                             <h4 class="text-sm font-bold text-slate-900">{{ $p->user->name }}</h4>
                             <div class="text-xs text-slate-500 mt-0.5">
                                 {{ $p->user->roles->first()?->name ?? '-' }} • {{ $p->user->instansi->nama_instansi ?? 'Diskominfo Riau' }}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 text-[11px] mt-1">
+                                @if ($p->user->telegram_id)
+                                    <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                                        <span class="material-symbols-outlined text-[13px]">send</span>
+                                        Telegram terhubung
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-slate-400">
+                                        <span class="material-symbols-outlined text-[13px]">send</span>
+                                        ID Telegram belum diisi
+                                    </span>
+                                @endif
+                                @if ($p->reminder_dikirim_at)
+                                    <span class="text-slate-400">• Reminder terkirim {{ $p->reminder_dikirim_at->format('d M Y, H:i') }}</span>
+                                @endif
                             </div>
                         </div>
                     </div>

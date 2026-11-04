@@ -117,6 +117,7 @@ Route::middleware(['auth', 'role_or_permission:admin_aptika|pengajuan.review|pro
         Route::resource('rapat', AptikaRapatController::class)->only(['create', 'store'])->middleware('role_or_permission:admin_aptika|rapat.create');
         Route::resource('rapat', AptikaRapatController::class)->only(['index', 'show'])->middleware('role_or_permission:admin_aptika|rapat.view');
         Route::patch('/rapat/{rapat}/notulensi', [AptikaRapatController::class, 'notulensi'])->name('rapat.notulensi')->middleware('role_or_permission:admin_aptika|rapat.notulensi');
+        Route::patch('/rapat/{rapat}/reminder', [AptikaRapatController::class, 'kirimReminder'])->name('rapat.reminder')->middleware('role_or_permission:admin_aptika|rapat.create');
 
         // Konfigurasi Layanan & Susunan Workflow Dinamis
         Route::resource('layanan', AptikaLayananController::class)->middleware('role_or_permission:admin_aptika|layanan.view');

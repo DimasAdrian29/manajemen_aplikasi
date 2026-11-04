@@ -69,7 +69,7 @@ class RapatProject extends Model
     public function pesertaUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'peserta_rapat', 'rapat_project_id', 'user_id')
-            ->withPivot('status_kehadiran', 'notifikasi_dikirim_at')
+            ->withPivot('status_kehadiran', 'notifikasi_dikirim_at', 'reminder_dikirim_at')
             ->withTimestamps();
     }
 }

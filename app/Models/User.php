@@ -72,7 +72,7 @@ class User extends Authenticatable
     public function rapatDiikuti(): BelongsToMany
     {
         return $this->belongsToMany(RapatProject::class, 'peserta_rapat', 'user_id', 'rapat_project_id')
-            ->withPivot('status_kehadiran', 'notifikasi_dikirim_at')
+            ->withPivot('status_kehadiran', 'notifikasi_dikirim_at', 'reminder_dikirim_at')
             ->withTimestamps();
     }
 

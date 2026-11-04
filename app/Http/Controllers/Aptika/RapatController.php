@@ -8,6 +8,8 @@ use App\Models\Project;
 use App\Models\RapatProject;
 use App\Models\User;
 use App\Notifications\UndanganRapatNotification;
+use App\Services\RapatReminderService;
+use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -174,5 +176,29 @@ class RapatController extends Controller
 
         return redirect()->route('aptika.rapat.show', $rapat)
             ->with('success', 'Notulensi dan dokumentasi rapat berhasil disimpan!');
+    }
+
+    /**
+     * Kirim reminder rapat melalui Telegram ke seluruh peserta.
+     */
+    public function kirimReminder(RapatProject $rapat, RapatReminderService $reminderService, TelegramService $telegramService): RedirectResponse
+    {
+        if (! $telegramService->isConfigured()) {
+            return back()->with('error', 'Bot Telegram belum dikonfigurasi. Atur TELEGRAM_BOT_TOKEN pada file .env terlebih dahulu.');
+        }
+
+        $hasil = $reminderService->kirimUntukRapat($rapat, paksa: true);
+
+        if ($hasil['terkirim'] === 0) {
+            return back()->with('error', 'Reminder tidak terkirim. Pastikan peserta rapat sudah mengisi ID Telegram pada profil masing-masing.');
+        }
+
+        $pesan = "Reminder Telegram berhasil dikirim ke {$hasil['terkirim']} peserta rapat.";
+
+        if ($hasil['dilewati'] > 0) {
+            $pesan .= " {$hasil['dilewati']} peserta dilewati karena belum memiliki ID Telegram.";
+        }
+
+        return back()->with('success', $pesan);
     }
 }
